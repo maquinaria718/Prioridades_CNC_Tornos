@@ -1,0 +1,1295 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#00693e">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Prioridades_CNC_Tornos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: banda verde de ingenio arriba, resumen, filtros (responsable desplegable) y un bloque plegable por responsable con su cola */
+:root{
+  --bg:#eef3ee; --panel:#ffffff; --panel2:#f4f8f2; --line:#d3ddd2; --fg:#15241a; --muted:#566a5c;
+  --brand:#00693e; --brand-2:#004d2c; --brand-ink:#ffffff; --cane:#7cb82f; --cane-soft:#e8f4d9; --gold:#f2b705; --gold-soft:#fdf3d0;
+  --ok:#1f7a4d; --ok-soft:#dff1e5; --warn:#a86400; --warn-soft:#fbefd9; --bad:#b3372d; --bad-soft:#f9e2df;
+  --u1:#c8352b; --u2:#e07b00; --u3:#2e9e5b;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,:root{color-scheme:light;background:#eef3ee}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:16px 60px;display:flex;flex-direction:column;gap:16px}
+h1,h2{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:.01em}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.hero{background:linear-gradient(120deg,var(--brand-2),var(--brand) 60%,var(--cane) 140%);color:var(--brand-ink);border-radius:12px;padding:20px 22px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-40px;top:-30px;width:220px;height:220px;border-radius:50%;border:26px solid rgba(255,255,255,.08)}
+.hero .eyebrow{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.14em;font-size:13px;font-weight:600;color:var(--gold)}
+.hero h1{font-size:clamp(28px,4vw,40px);font-weight:700;line-height:1.05;margin-top:2px}
+.hero p{margin:6px 0 0;max-width:70ch;opacity:.92}
+.banner{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:10px 14px;color:var(--muted);font-size:14px}
+.banner b{color:var(--fg)}
+.banner.err{border-color:var(--bad);color:var(--bad);background:var(--bad-soft)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--brand);border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;gap:2px;cursor:pointer;text-align:left;color:inherit;font:inherit;transition:transform .12s,box-shadow .12s}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,60,30,.12)}
+.kpi[aria-pressed="true"]{background:var(--cane-soft);border-color:var(--cane)}
+.kpi .v{font-family:var(--f-mono);font-size:28px;font-weight:700;line-height:1.1}
+.kpi .l{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.kpi.k1{border-top-color:#ffffff;box-shadow:inset 0 0 0 1px var(--line)} .kpi.k1 .v{color:var(--fg)} .kpi.k1[aria-pressed="true"]{background:var(--panel);border-color:var(--fg)}
+.kpi.k2{border-top-color:var(--u1)} .kpi.k2 .v{color:var(--u1)}
+.kpi.k3{border-top-color:var(--gold)} .kpi.k3 .v{color:var(--warn)}
+.kpi.k4{border-top-color:#9aa39c} .kpi.k4 .v{color:#6b746d}
+
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:end;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0;position:relative}
+.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+select,input[type=search]{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 10px;max-width:100%}
+select:focus-visible,input:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--cane);outline-offset:1px}
+.field.grow{flex:1 1 200px}
+.field.resp{flex:1 1 300px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.seg button{font:inherit;border:0;background:transparent;color:var(--fg);padding:7px 12px;cursor:pointer;transition:background .12s}
+.seg button:hover{background:var(--cane-soft)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--brand);color:var(--brand-ink)}
+
+.dd-btn{font:inherit;display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:7px 10px;cursor:pointer}
+.dd-btn:hover{border-color:var(--brand)}
+.dd-btn .txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.dd-btn .arr{color:var(--brand);transition:transform .15s}
+.dd-btn[aria-expanded="true"] .arr{transform:rotate(180deg)}
+.dd-panel{position:absolute;top:100%;left:0;right:0;z-index:20;margin-top:4px;background:var(--panel);border:1px solid var(--brand);border-radius:8px;box-shadow:0 12px 30px rgba(0,40,20,.22);display:flex;flex-direction:column;max-height:min(70vh,520px)}
+.dd-head{display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--line)}
+.dd-head .btn{flex:1}
+.dd-list{overflow-y:auto;padding:4px}
+.dd-item{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:14px}
+.dd-item:hover{background:var(--cane-soft)}
+.dd-item input{accent-color:var(--brand);width:16px;height:16px;flex:none}
+.dd-item .nm{flex:1;min-width:0}
+.dd-item .c{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.dd-item.zero{opacity:.5}
+
+.btn{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:6px;padding:6px 10px;cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s}
+.btn:hover{border-color:var(--brand);background:var(--cane-soft)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:var(--brand-ink)}
+.btn.ok:hover{filter:brightness(1.08)}
+
+#list{display:flex;flex-direction:column;gap:10px}
+details.group{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:10px;overflow:hidden}
+details.group>summary{list-style:none;cursor:pointer;padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:var(--panel2);transition:background .12s}
+details.group>summary:hover{background:var(--cane-soft)}
+details.group>summary::-webkit-details-marker{display:none}
+details.group[open]>summary{border-bottom:1px solid var(--line)}
+.caret{width:22px;height:22px;display:grid;place-items:center;color:var(--brand);transition:transform .15s;flex:none}
+details.group[open] .caret{transform:rotate(90deg)}
+.gname{flex:1 1 260px;min-width:0}
+.gname h2{font-size:21px;font-weight:600}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.propuesto{background:var(--warn-soft);color:var(--warn)}
+.pill.validado{background:var(--ok-soft);color:var(--ok)}
+.pill.cambio{background:var(--bad-soft);color:var(--bad)}
+.pill.lab{background:var(--cane-soft);color:var(--brand)}
+.pill.none{background:var(--panel);border:1px dashed var(--line);color:var(--muted)}
+.pill.lv{background:var(--panel);border:1px solid var(--line);color:var(--fg)}
+.u{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;font-family:var(--f-mono);font-weight:700;font-size:11px;color:#fff;flex:none}
+.u1{background:var(--u1)} .u2{background:var(--u2)} .u3{background:var(--u3)}
+
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:52px 180px 210px minmax(0,1fr) 150px;gap:8px 14px;padding:10px 16px;border-top:1px solid var(--line);align-items:center;transition:background .12s}
+.row:first-child{border-top:0}
+.row:hover{background:var(--panel2)}
+.row.lv1{box-shadow:inset 4px 0 0 var(--u1)} .row.lv2{box-shadow:inset 4px 0 0 var(--u2)} .row.lv3{box-shadow:inset 4px 0 0 var(--u3)}
+.row.cambio{background:var(--bad-soft)}
+.row.sep{border-top:2px dashed var(--line)}
+.pos{display:grid;place-items:center}
+.pos .n{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;font-family:var(--f-mono);font-weight:700;font-size:17px;color:#fff}
+.pos .n.l1{background:var(--u1)} .pos .n.l2{background:var(--u2)} .pos .n.l3{background:var(--u3)}
+.pos .n.rest{background:transparent;color:var(--muted);font-size:15px;width:auto;height:auto}
+.slot{display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:0}
+.slot small{white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.opts{display:inline-flex;gap:4px}
+.opts button{font:inherit;font-family:var(--f-mono);font-weight:700;font-size:14px;width:34px;height:32px;border:2px solid var(--line);border-radius:8px;background:var(--panel);color:var(--muted);cursor:pointer;transition:transform .1s,border-color .12s,background .12s}
+.opts button:hover:not(:disabled){transform:translateY(-1px)}
+.opts button[data-v="1"]:hover:not(:disabled){border-color:var(--u1);color:var(--u1)}
+.opts button[data-v="2"]:hover:not(:disabled){border-color:var(--u2);color:var(--u2)}
+.opts button[data-v="3"]:hover:not(:disabled){border-color:var(--u3);color:var(--u3)}
+.opts button[aria-pressed="true"][data-v="1"]{background:var(--u1);border-color:var(--u1);color:#fff}
+.opts button[aria-pressed="true"][data-v="2"]{background:var(--u2);border-color:var(--u2);color:#fff}
+.opts button[aria-pressed="true"][data-v="3"]{background:var(--u3);border-color:var(--u3);color:#fff}
+.opts button:disabled{cursor:not-allowed;opacity:.6}
+.vrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.stamp{font-size:13px;color:var(--muted)}
+.stamp.ok{color:var(--ok);font-weight:600}
+.desc{min-width:0}
+.desc .t{font-weight:600;overflow-wrap:anywhere}
+.desc .ids{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--muted);margin-top:2px}
+.desc .ids b{font-weight:500;color:var(--fg)}
+.when{text-align:right;font-size:13px;color:var(--muted);display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.when .d{font-family:var(--f-mono)}
+.age{font-family:var(--f-mono);font-weight:700;color:var(--fg)}
+.age.old{color:var(--bad)}
+.empty{padding:40px 16px;text-align:center;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:10px}
+.help{font-size:13.5px;color:var(--muted);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.help div{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--cane);border-radius:8px;padding:10px 12px}
+.help b{display:block;color:var(--brand);font-family:var(--f-display);font-size:16px;font-weight:600;letter-spacing:.02em}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--brand);color:var(--brand-ink);padding:8px 14px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:calc(100% - 32px)}
+#toast.on{opacity:1}
+@media (max-width:860px){
+  .row{grid-template-columns:44px minmax(0,1fr) minmax(0,1fr)}
+  .desc{grid-column:1/-1}
+  .when{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;justify-content:flex-start;align-items:center;text-align:left;gap:4px 12px}
+}
+@media (max-width:560px){
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .help{grid-template-columns:1fr}
+  .row{grid-template-columns:44px minmax(0,1fr)}
+  .row .slot.fin{grid-column:2}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.kpis{grid-template-columns:repeat(7,minmax(0,1fr))}
+.kpi.k6{border-top-color:var(--u2)} .kpi.k6 .v{color:var(--u2)}
+.kpi.k7{border-top-color:#7a4fa0} .kpi.k7 .v{color:#7a4fa0}
+@media (max-width:1100px){ .kpis{grid-template-columns:repeat(4,minmax(0,1fr))} }
+.kpi.k5{border-top-color:var(--ok)} .kpi.k5 .v{color:var(--ok)}
+.row{grid-template-columns:52px 180px minmax(0,1fr) 150px}
+.row.fin-row .desc>.t,.row.fin-row .desc>.ids,.row.fin-row .when{opacity:.6}
+.row.fin-row .desc .t{text-decoration:line-through;text-decoration-color:var(--ok)}
+.work{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}
+.work .wl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.work select.mec{font-size:13px;padding:4px 8px;min-width:0;max-width:100%;border-color:var(--brand)}
+.work select.mec.none{border-style:dashed;border-color:var(--line);color:var(--muted)}
+.est{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.est button{font:inherit;font-size:12.5px;font-weight:600;border:0;background:transparent;color:var(--muted);padding:5px 10px;cursor:pointer;transition:background .12s}
+.est button+button{border-left:1px solid var(--line)}
+.est button:hover{background:var(--cane-soft);color:var(--fg)}
+.est button[aria-pressed="true"][data-v="pendiente"]{background:#7a4fa0;color:#fff}
+.est button[aria-pressed="true"][data-v="cola"]{background:#fdebd6;color:#a85400}
+.est button[aria-pressed="true"][data-v="proceso"]{background:var(--brand);color:var(--brand-ink)}
+.est button[aria-pressed="true"][data-v="finalizado"]{background:var(--ok);color:var(--brand-ink)}
+.work input.mot{font:inherit;font-size:13px;color:var(--fg);background:var(--panel);border:1px solid #7a4fa0;border-radius:6px;padding:5px 8px;flex:1 1 220px;min-width:0}
+.wread{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px}
+.wread b{font-weight:600}
+.pill.pendiente{background:#efe6f6;color:#7a4fa0}
+.pill.cola{background:#fdebd6;color:#a85400}
+.pill.proceso{background:var(--brand);color:var(--brand-ink)}
+.pill.finalizado{background:var(--ok-soft);color:var(--ok)}
+.pill.sinest{background:var(--panel);border:1px dashed var(--line);color:var(--muted)}
+
+.vistas .add{margin-left:auto;border-color:#7a4fa0;color:#7a4fa0}
+.vistas .add:hover{background:#efe6f6}
+.cap{background:var(--panel);border:2px solid #7a4fa0;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.caph{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.caph h2{font-size:22px;color:#7a4fa0}
+.capn{margin:0;color:var(--muted);font-size:14px}
+.capfile{display:flex;align-items:center;justify-content:center;gap:8px;border:2px dashed #b9a3cc;border-radius:10px;padding:18px;cursor:pointer;font-weight:600;color:#7a4fa0;background:#faf6fd}
+.capfile input{position:absolute;opacity:0;width:1px;height:1px}
+.capmsg{font-size:14px;color:var(--muted)}
+.capmsg.err{color:var(--bad)}
+.capbar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.capbar i{display:block;height:100%;background:#7a4fa0;width:0;transition:width .2s}
+.capform{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+.capform .full{grid-column:1/-1}
+.capform label{display:flex;flex-direction:column;gap:4px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;min-width:0}
+.capform input,.capform select,.capform textarea{font:inherit;font-size:15px;text-transform:none;letter-spacing:0;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0;width:100%}
+.capform textarea{min-height:70px;resize:vertical}
+.capform .dudoso{border-color:var(--u2);background:#fff7ec}
+.capacts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.capacts .btn{font-size:15px;padding:9px 16px}
+@media (max-width:560px){ .capform{grid-template-columns:1fr} .vistas .add{margin-left:0} }
+
+
+.fechas{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;margin-top:8px;font-size:13px;color:var(--muted)}
+.fechas b{color:var(--fg);font-family:var(--f-mono);font-weight:600}
+.fechas .dur{background:var(--ok-soft);color:var(--ok);border-radius:999px;padding:1px 9px;font-weight:600}
+.fechas .dur.run{background:#fdf3d0;color:var(--warn)}
+.matbox{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;border-left:4px solid #7a4fa0;background:#f4eefa;border-radius:6px;padding:8px 12px;font-size:13.5px;color:#4b2f66}
+.matbox b{font-size:14px;color:#7a4fa0;text-transform:uppercase;letter-spacing:.05em}
+.matbox .que{font-weight:600;color:#2e1d40}
+.matbox .dias{margin-left:auto;background:#7a4fa0;color:#fff;border-radius:999px;padding:2px 10px;font-weight:700;font-family:var(--f-mono)}
+
+
+.opts button.lvbtn{width:auto;padding:0 10px;font-family:var(--f-body);font-size:13px}
+.opts button.lvbtn[data-v="1"][aria-pressed="true"]{background:var(--u1);border-color:var(--u1);color:#fff}
+.opts button.lvbtn[data-v="2"][aria-pressed="true"]{background:var(--u2);border-color:var(--u2);color:#fff}
+.opts button.lvbtn[data-v="3"][aria-pressed="true"]{background:var(--u3);border-color:var(--u3);color:#fff}
+.pos .n.fin{background:var(--ok-soft);color:var(--ok);font-size:18px}
+.est button.lock{opacity:.45}
+.circ{margin-top:6px;font-size:13.5px;color:var(--fg);background:var(--panel2);border:1px dashed var(--line);border-radius:6px;padding:6px 10px;overflow-wrap:anywhere}
+.circ span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.cierre{margin-top:8px;border:2px solid var(--ok);border-radius:10px;background:var(--ok-soft);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.cierre .ct{font-weight:700;color:var(--ok)}
+.cierre .fila{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cierre label.btn{position:relative;cursor:pointer}
+.cierre label.btn input{position:absolute;opacity:0;width:1px;height:1px}
+.cierre img{max-width:120px;max-height:90px;border-radius:6px;border:1px solid var(--line)}
+.cierre .pie{border-top:1px dashed var(--ok);padding-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.cierre .pie small{color:var(--muted)}
+.btn.wa{background:#25a244;border-color:#25a244;color:#fff;font-size:14px;padding:8px 14px}
+.mecs{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.mecs>summary{cursor:pointer;padding:12px 16px;font-family:var(--f-display);font-size:20px;font-weight:600;color:var(--brand);list-style:none}
+.mecs>summary::-webkit-details-marker{display:none}
+.mecgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;padding:0 12px 12px}
+.mcard{border:1px solid var(--line);border-top:4px solid var(--brand);border-radius:8px;padding:10px 12px;background:var(--panel2);min-width:0}
+.mcard h3{margin:0 0 6px;font-size:15px;font-family:var(--f-body)}
+.mcard .chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.mcard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.mcard li{font-size:13px;display:flex;gap:6px;align-items:baseline;min-width:0}
+.mcard li .tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+.mcard li b{font-family:var(--f-mono);font-weight:600}
+.mlibres{padding:0 16px 12px;font-size:13px;color:var(--muted)}
+
+
+.vistas button#vSol[aria-pressed="true"]{border-color:#b5651d;background:#b5651d;color:#fff}
+.sol{background:var(--panel);border:2px solid #b5651d;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.sol h2{font-size:24px;color:#b5651d}
+.sol .sub{margin:0;color:var(--muted);font-size:14px}
+.sol fieldset{border:1px solid var(--line);border-radius:10px;padding:10px 12px 12px;margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px}
+.sol legend{font-family:var(--f-display);font-size:16px;font-weight:600;color:#b5651d;padding:0 6px;letter-spacing:.03em;text-transform:uppercase}
+.sol label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;min-width:0}
+.sol input,.sol select,.sol textarea{font:inherit;font-size:15px;text-transform:none;letter-spacing:0;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0;width:100%}
+.sol textarea{min-height:60px;resize:vertical}
+.sol .w2{grid-column:span 2} .sol .w4{grid-column:1/-1}
+.sol .info{grid-column:1/-1;font-size:13.5px;border-radius:6px;padding:8px 10px;background:var(--panel2);border:1px dashed var(--line);color:var(--muted)}
+.sol .info.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-soft)}
+.sol .info.warn{border-color:var(--u2);color:#8a4b00;background:#fff4e6}
+.items{grid-column:1/-1;display:flex;flex-direction:column;gap:10px}
+.item{border:1px solid #e3c6a8;border-left:5px solid #b5651d;border-radius:8px;padding:10px;background:#fffaf4;display:grid;grid-template-columns:70px 90px 1.2fr 1.4fr 90px 1.2fr 1fr;gap:8px;align-items:end}
+.item .num{font-family:var(--f-mono);font-weight:700;color:#b5651d;grid-column:1/-1;display:flex;justify-content:space-between;align-items:center}
+.item .obs{grid-column:1/-1}
+.item .del{border:0;background:none;color:var(--bad);font-weight:600;cursor:pointer;font:inherit;font-size:13px}
+.sol .acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center}
+.sol .acts .btn{font-size:15px;padding:10px 16px}
+.btn.nar{background:#b5651d;border-color:#b5651d;color:#fff}
+.solok{border:2px solid var(--ok);background:var(--ok-soft);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.solok pre{margin:0;white-space:pre-wrap;font-family:var(--f-body);font-size:14px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px;max-height:320px;overflow:auto}
+@media (max-width:860px){ .sol fieldset{grid-template-columns:repeat(2,minmax(0,1fr))} .item{grid-template-columns:repeat(2,minmax(0,1fr))} .sol .w2{grid-column:1/-1} }
+
+.mot-read{color:#7a4fa0;font-style:italic}
+.vistas{display:flex;gap:8px;flex-wrap:wrap}
+.vistas button{font:inherit;font-weight:600;font-size:15px;border:2px solid var(--line);background:var(--panel);color:var(--fg);border-radius:10px;padding:10px 16px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.vistas button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand);color:var(--brand-ink)}
+.vistas button#vFre[aria-pressed="true"]{border-color:#1d5b8c;background:#1d5b8c}
+.vistas .cnt{background:#1d5b8c;color:#fff;border-radius:999px;padding:1px 9px;font-family:var(--f-mono);font-size:13px}
+.vistas button[aria-pressed="true"] .cnt{background:#fff;color:#1d5b8c}
+.fq{background:var(--panel);border:1px solid var(--line);border-left:5px solid #1d5b8c;border-radius:10px;overflow:hidden}
+.fqh{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;justify-content:space-between;padding:12px 16px;background:#e3edf6}
+.fqh h2{font-size:22px;color:#1d5b8c}
+.fcard{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:10px 14px;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+.fcard.lv1{box-shadow:inset 4px 0 0 var(--u1)} .fcard.lv2{box-shadow:inset 4px 0 0 var(--u2)} .fcard.lv3{box-shadow:inset 4px 0 0 var(--u3)}
+.fnum{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#e3edf6;color:#1d5b8c;font-family:var(--f-mono);font-weight:700;font-size:18px}
+.fnum.l1{background:var(--u1);color:#fff} .fnum.l2{background:var(--u2);color:#fff} .fnum.l3{background:var(--u3);color:#fff}
+.fbody{min-width:0}
+.fbody .t{font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.fbody .ids{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--muted);margin-top:3px}
+.fbody .ids b{color:var(--fg);font-weight:600}
+.fdone{font-size:15px;padding:10px 16px}
+.fhechos{border-top:1px solid var(--line)}
+.fhechos summary{cursor:pointer;padding:10px 16px;font-weight:600;color:var(--ok)}
+.fh{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 16px;font-size:13px;color:var(--muted);border-top:1px dashed var(--line)}
+@media (max-width:560px){ .fcard{grid-template-columns:40px minmax(0,1fr)} .fdone{grid-column:1/-1;width:100%} }
+
+.fre{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.fre button{font:inherit;font-size:12.5px;font-weight:600;border:0;background:transparent;color:var(--muted);padding:5px 10px;cursor:pointer}
+.fre button+button{border-left:1px solid var(--line)}
+.fre button:hover{background:var(--cane-soft);color:var(--fg)}
+.fre button[aria-pressed="true"][data-v="pendiente"]{background:#e3edf6;color:#1d5b8c}
+.fre button[aria-pressed="true"][data-v="hecho"]{background:#1d5b8c;color:#fff}
+.pill.fre-p{background:#e3edf6;color:#1d5b8c} .pill.fre-h{background:#1d5b8c;color:#fff}
+.work .brk{flex-basis:100%;height:0}
+.frerow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;flex-basis:100%;padding-top:8px;border-top:1px dashed #b9cce0}
+.frerow .wl{color:#1d5b8c}
+@media (max-width:860px){ .kpis{grid-template-columns:repeat(3,minmax(0,1fr))} .row{grid-template-columns:44px minmax(0,1fr)} .desc{grid-column:1/-1} }
+@media (max-width:560px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.seg button.wa{background:#25a244;color:#fff;font-weight:600}
+.seg button.wa:hover{background:#1e8a39}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Reparación 2026 · Avisos abiertos · CNC y Tornos</div>
+    <h1>Prioridades_CNC_Tornos</h1>
+  </header>
+
+  <div id="banner" class="banner">Conectando con el registro compartido…</div>
+
+  <section class="kpis" aria-label="Resumen">
+    <button class="kpi k1" data-k="" type="button"><span class="v" id="k-all">0</span><span class="l">Avisos abiertos</span></button>
+    <button class="kpi k2" data-k="urg" type="button"><span class="v" id="k-urg">0</span><span class="l">Urgentes marcados</span></button>
+    <button class="kpi k4" data-k="sinmec" type="button"><span class="v" id="k-sinmec">0</span><span class="l">Sin mecánico</span></button>
+    <button class="kpi k6" data-k="sinest" type="button"><span class="v" id="k-cola">0</span><span class="l">En cola</span></button>
+    <button class="kpi k7" data-k="pendiente" type="button"><span class="v" id="k-mat">0</span><span class="l">Necesita material</span></button>
+    <button class="kpi k3" data-k="proceso" type="button"><span class="v" id="k-proc">0</span><span class="l">En proceso</span></button>
+    <button class="kpi k5" data-k="finalizado" type="button"><span class="v" id="k-fin">0</span><span class="l">Finalizados</span></button>
+  </section>
+
+
+  <details class="mecs" id="mecs" open><summary>Trabajo por mecánico <span id="mecsN" class="pill lab"></span></summary><div id="mecsBody"></div></details>
+  <section class="tools" aria-label="Filtros">
+    <div class="field resp">
+      <span class="lbl" id="respLbl">Responsable</span>
+      <button class="dd-btn" id="ddBtn" type="button" aria-expanded="false" aria-haspopup="listbox" aria-labelledby="respLbl ddTxt"><span class="txt" id="ddTxt">Todos</span><span class="arr" aria-hidden="true">▾</span></button>
+      <div class="dd-panel" id="ddPanel" hidden>
+        <div class="dd-head"><button class="btn" id="ddAll" type="button">Marcar todos</button><button class="btn" id="ddNone" type="button">Quitar todos</button></div>
+        <div class="dd-list" id="ddList"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="fmec">Mecánico</label>
+      <select id="fmec"></select>
+    </div>
+    <div class="field">
+      <span class="lbl">Laboratorio</span>
+      <div class="seg" id="lab">
+        <button type="button" data-v="" aria-pressed="true">Ambos</button>
+        <button type="button" data-v="CNC" aria-pressed="false">CNC</button>
+        <button type="button" data-v="TORNOS" aria-pressed="false">Tornos</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="estado">Mostrar</label>
+      <select id="estado">
+        <option value="">Todos los avisos</option>
+        <option value="urg">Solo urgentes (1, 2, 3)</option>
+        <option value="sinurg">Responsables sin urgentes</option>
+        <option value="sinmec">Sin mecánico asignado</option>
+        <option value="sinest">En cola</option>
+        <option value="pendiente">Necesita material</option>
+        <option value="proceso">En proceso</option>
+        <option value="finalizado">Finalizados</option>
+        <option value="frep">Fresadora CNC pendiente</option>
+        <option value="freh">Fresadora CNC hecho</option>
+      </select>
+    </div>
+    <div class="field grow">
+      <label class="lbl" for="q">Buscar</label>
+      <input id="q" type="search" placeholder="Aviso, orden, equipo o descripción">
+    </div>
+    <div class="field">
+      <span class="lbl">Bloques</span>
+      <div class="seg">
+        <button type="button" id="expAll">Expandir todo</button>
+        <button type="button" id="colAll">Comprimir todo</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="vistas" id="vistas">
+    <button type="button" id="vResp" aria-pressed="true">Por responsable</button>
+    <button type="button" id="vFre" aria-pressed="false" hidden>Cola Fresadora CNC <span class="cnt" id="freCnt">0</span></button>
+    <button type="button" id="vSol">Solicitud de trabajo</button>
+    <button type="button" id="vAdd" class="add">+ Agregar aviso (captura SAP)</button>
+  </div>
+  <section class="cap" id="cap" hidden>
+    <div class="caph"><h2>Agregar aviso desde captura de SAP</h2><button class="btn" id="capX" type="button">Cerrar</button></div>
+    <p class="capn">Sube la captura del aviso (la de SAP que mandan por WhatsApp). La imagen se lee aquí mismo en tu teléfono y <b>no se guarda ni se envía</b>: solo se guardan los datos que confirmes abajo.</p>
+    <label class="capfile" for="capFile"><input type="file" id="capFile" accept="image/*"><span>Elegir captura</span></label>
+    <div class="capbar" id="capBar" hidden><i></i></div>
+    <div class="capmsg" id="capMsg"></div>
+    <form class="capform" id="capForm" hidden>
+      <label>Aviso<input id="cA" inputmode="numeric" maxlength="8" required></label>
+      <label>Laboratorio<select id="cL" required><option value="">Elegir…</option><option value="TORNOS">Tornos</option><option value="CNC">CNC</option></select></label>
+      <label class="full">Descripción<input id="cD" maxlength="120" required></label>
+      <label>Equipo<input id="cE" inputmode="numeric" maxlength="12"></label>
+      <label>Orden<input id="cO" inputmode="numeric" maxlength="12" placeholder="Sin orden SAP"></label>
+      <label>Responsable (empleado responsable)<select id="cN"></select></label>
+      <label>Ficha<input id="cF" inputmode="numeric" maxlength="10"></label>
+      <label>Fecha de creación<input id="cC" type="date"></label>
+      <label>Estado SAP<input id="cS" maxlength="30"></label>
+      <label class="full">Detalle<textarea id="cT" maxlength="500"></textarea></label>
+      <div class="capacts full"><button class="btn" type="button" id="capCancel">Cancelar</button><button class="btn ok" type="submit" id="capSave">Guardar aviso</button></div>
+    </form>
+  </section>
+
+  <section class="sol" id="sol" hidden>
+    <div><h2>Solicitud de trabajo al taller</h2>
+    <p class="sub">Escribe el número de aviso y detalla cada pieza: cantidad, trabajo, medida y material. Se guarda en la hoja <b>Solicitudes</b> para Planificación y se envía por WhatsApp con un formato ordenado.</p></div>
+    <form id="solForm" autocomplete="off">
+      <fieldset><legend>1 · Aviso</legend>
+        <label>Número de aviso<input id="sA" inputmode="numeric" maxlength="8" placeholder="11106961" required></label>
+        <label>Equipo<input id="sE" inputmode="numeric" maxlength="12"></label>
+        <label class="w2">Descripción SAP<input id="sD" maxlength="120"></label>
+        <div class="info" id="sInfo">Escribe el aviso y se llenan solos el equipo, la descripción y el solicitante.</div>
+      </fieldset>
+      <fieldset><legend>2 · Solicitante</legend>
+        <label class="w2">Nombre<select id="sN" required></select></label>
+        <label>Prioridad<select id="sP"><option>Media</option><option>Alta</option><option>Baja</option></select></label>
+        <label>Lo necesita para<input id="sF" type="date"></label>
+      </fieldset>
+      <fieldset><legend>3 · Qué necesita</legend>
+        <div class="items" id="sItems"></div>
+        <div class="w4"><button class="btn" type="button" id="sAdd">+ Agregar otra pieza</button></div>
+      </fieldset>
+      <fieldset><legend>4 · Referencia y material</legend>
+        <label class="w2">Referencia para fabricar<select id="sR"><option value="">Elegir…</option><option>Entrega pieza de muestra</option><option>Entrega plano / dibujo con medidas</option><option>Medidas escritas en esta solicitud</option><option>Pasar a medir al equipo</option></select></label>
+        <label class="w2">Material lo pone<select id="sM"><option value="">Elegir…</option><option>Taller (bodega)</option><option>Solicitante</option><option>Hay que comprarlo</option></select></label>
+        <label class="w4">Notas generales<textarea id="sT" maxlength="400" placeholder="Ej. es para el camión cisterna, urge para el turno de la noche…"></textarea></label>
+      </fieldset>
+      <div class="acts"><span class="capmsg" id="sMsg"></span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="reset" id="sReset">Limpiar</button><button class="btn nar" type="submit" id="sSave">Guardar y preparar WhatsApp</button></div></div>
+    </form>
+    <div class="solok" id="sOk" hidden>
+      <b style="color:var(--ok)">✓ Solicitud guardada para Planificación</b>
+      <pre id="sTxt"></pre>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn wa" type="button" id="sWa">Enviar por WhatsApp</button><button class="btn" type="button" id="sCopy">Copiar mensaje</button><button class="btn" type="button" id="sNew">Nueva solicitud</button></div>
+    </div>
+    <datalist id="dlPieza"><option value="Nipple"></option><option value="Escamoso"></option><option value="Buje"></option><option value="Pasador"></option><option value="Eje"></option><option value="Tuerca"></option><option value="Tornillo"></option><option value="Arandela"></option><option value="Polea"></option><option value="Flange / brida"></option><option value="Acople"></option><option value="Fitting"></option><option value="Espárrago"></option><option value="Tapón"></option><option value="Camisa"></option><option value="Barra roscada"></option></datalist>
+    <datalist id="dlMat"><option value="Acero al carbono"></option><option value="Acero 1045"></option><option value="Acero 4140"></option><option value="Acero inoxidable"></option><option value="Bronce"></option><option value="Aluminio"></option><option value="Hierro fundido"></option><option value="Nylon / teflón"></option><option value="Igual a la muestra"></option></datalist>
+  </section>
+  <main id="list" aria-live="polite"></main>
+
+</div>
+<datalist id="motivos">
+  <option value="Falta material"></option>
+  <option value="Falta repuesto"></option>
+  <option value="Material en compra"></option>
+  <option value="Esperando material del área"></option>
+  <option value="Falta materia prima (barra, platina, eje)"></option>
+</datalist>
+<div id="toast" role="status"></div>
+
+<script>
+const PIN_HASH = "12635qw";
+const API_URL = "https://script.google.com/macros/s/AKfycbxhnrhDJhoksQ_QEHE74Q_uAonmLOp1emgYQXjkb0aXXDpp_vN6eN0t4w72pxxSVV7RWQ/exec";   // URL de la aplicación web de Google Apps Script
+let DATA = [{"a":"11090297","o":"30963858","e":"10130258","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE TUERCAS","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-09","s":"METR ORAS"},{"a":"11090527","o":"30964861","e":"10130210","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE ESPARRAGOS","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-10","s":"METR ORAS"},{"a":"11091062","o":"30965746","e":"10130234","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE TAPÓN","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-14","s":"METR ORAS"},{"a":"11091073","o":"30965752","e":"10010565","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE INSTALADOR","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-14","s":"METR ORAS"},{"a":"11091426","o":"30965973","e":"10130258","l":"TORNOS","d":"PSAM-TOR-Fabricar 4 pasamuros de 1/2","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-15","s":"METR ORAS"},{"a":"11091790","o":"30966217","e":"10130211","l":"TORNOS","d":"PSAM-TOR-Fabricar 4 bujes 1.1/2\" x 3\"x","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-17","s":"METR ORAS"},{"a":"11091797","o":"30966221","e":"10130211","l":"TORNOS","d":"PSAM-TOR-Fabricar 6 padadores 1.1/2 x 10","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-17","s":"METR ORAS"},{"a":"11091803","o":"30966226","e":"10130211","l":"TORNOS","d":"PSAM-TOR-Fabricar 4 pasamuros de 1/2","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-17","s":"METR ORAS"},{"a":"11091806","o":"30966227","e":"10130211","l":"TORNOS","d":"PSAM-TOR-Fabricar 4 bujes para flanges","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-17","s":"METR ORAS"},{"a":"11091875","o":"","e":"10040366","l":"TORNOS","d":"PSAM-TORN-FABRICAR 10 ACOPLE DE FITTINGS","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-07-17","s":"METR"},{"a":"11091876","o":"","e":"10040363","l":"TORNOS","d":"PSAM-TORN-FABRICAR 10 ACOPLE DE FITTINGS","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-07-17","s":"METR"},{"a":"11091877","o":"","e":"10040367","l":"TORNOS","d":"PSAM-TORN-FABRICAR 10 ACOPLE DE FITTINGS","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-07-17","s":"MEAB"},{"a":"11091878","o":"","e":"10040331","l":"TORNOS","d":"PSAM-TORN-FABRICAR 10 ACOPLE DE FITTINGS","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-07-17","s":"METR"},{"a":"11091961","o":"30966281","e":"10060388","l":"TORNOS","d":"PSAM-TORNS388 fabricacion de almuhadilla","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-18","s":"METR ORAS"},{"a":"11091962","o":"30966282","e":"10060387","l":"TORNOS","d":"PSAM-TORNS387 fabricacion de almuhadilla","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-18","s":"METR ORAS"},{"a":"11091966","o":"30966286","e":"10060658","l":"TORNOS","d":"PSAM-TORNS658 tuercas para crucetas","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-18","s":"METR ORAS"},{"a":"11092130","o":"30966326","e":"10130354","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-20","s":"METR ORAS"},{"a":"11092318","o":"30966539","e":"10010645","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE POLEA","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-21","s":"METR ORAS"},{"a":"11092595","o":"30966728","e":"10052037","l":"TORNOS","d":"PSAM-TORN-Fabricar 1 base de chorro de 4","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-07-22","s":"METR ORAS"},{"a":"11092715","o":"30966771","e":"10070125","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE NIPPLES","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-07-23","s":"METR ORAS"},{"a":"11092716","o":"30966772","e":"10070125","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE ESCAMOSOS","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-07-23","s":"METR ORAS"},{"a":"11092811","o":"30966832","e":"10070724","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE PASADOR","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-23","s":"METR ORAS"},{"a":"11092846","o":"30966855","e":"10010642","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de 10 puntas de 1","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-07-23","s":"METR ORAS"},{"a":"11093031","o":"30967145","e":"10020139","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE FITTINES","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-07-24","s":"METR ORAS"},{"a":"11093268","o":"30967547","e":"10051962","l":"TORNOS","d":"PSAM-TORN-CALZAR ESE DE FRENOS","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-07-27","s":"METR ORAS"},{"a":"11093271","o":"30967549","e":"10051962","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BASE DE CARGADO","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-07-27","s":"METR ORAS"},{"a":"11091555","o":"30965875","e":"10060661","l":"TORNOS","d":"PSAM-TORNS661 almuhadillas para capo","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-18","s":"METR ORAS"},{"a":"11093835","o":"30967951","e":"10010616","l":"TORNOS","d":"PSAM-TORN-Calzar pin de eje y fabricació","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-07-29","s":"METR ORAS"},{"a":"11094118","o":"30968418","e":"10130156","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-30","s":"METR ORAS"},{"a":"11094131","o":"30968421","e":"10130156","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-07-30","s":"METR ORAS"},{"a":"11094174","o":"30968453","e":"10060369","l":"TORNOS","d":"PSAM-TORNS369 Nible de 1/4","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-30","s":"METR ORAS"},{"a":"11094175","o":"30968452","e":"10060666","l":"TORNOS","d":"PSAM-TORNS666 Niple dd 1/4","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-30","s":"METR ORAS"},{"a":"11094176","o":"30968461","e":"10060680","l":"TORNOS","d":"PSAM-TORNS680 Nible 1/4","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-30","s":"METR ORAS"},{"a":"11094177","o":"30968460","e":"10060374","l":"TORNOS","d":"PSAM-TORNS374 Nible de 1/4","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-30","s":"METR ORAS"},{"a":"11094178","o":"30967939","e":"10060658","l":"TORNOS","d":"PSAM-TORNS658 Nible de 1/4","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-30","s":"METR ORAS"},{"a":"11094189","o":"30968465","e":"10060379","l":"TORNOS","d":"PSAM-TORNS379 Tapon de arbuto","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-30","s":"METR ORAS"},{"a":"11094230","o":"30968466","e":"10060659","l":"TORNOS","d":"PSAM-TORNS659 Tapon de arbuto","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-30","s":"METR ORAS"},{"a":"11094231","o":"30968467","e":"10060661","l":"TORNOS","d":"PSAM-TORNS661 Tapones de arbuto","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-07-30","s":"METR ORAS"},{"a":"11094500","o":"30968920","e":"10130167","l":"TORNOS","d":"PSAM-TOR- fabricacion de 4 esparragos","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-08-01","s":"METR ORAS"},{"a":"11094608","o":"30968957","e":"10051917","l":"TORNOS","d":"PSAM-TORNS1917 Roldanas para pasadores","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-03","s":"METR ORAS"},{"a":"11094609","o":"30968956","e":"10051918","l":"TORNOS","d":"PSAM-TORNS1918 Roldanas para compuerta","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-03","s":"METR ORAS"},{"a":"11094700","o":"30968955","e":"10051935","l":"TORNOS","d":"PSAM-TORNS1935 Roldanas para compuerta","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-03","s":"METR ORAS"},{"a":"11094701","o":"30968954","e":"10051936","l":"TORNOS","d":"PSAM-TORNS1936 Roldanas para compuertas","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-03","s":"METR ORAS"},{"a":"11094702","o":"30968953","e":"10051952","l":"TORNOS","d":"PSAM-TORNS1952 Roldanas para compuertas","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-03","s":"METR ORAS"},{"a":"11094703","o":"30968952","e":"10051953","l":"TORNOS","d":"PSAM-TORNS1953 Roldanas para compuerta","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-03","s":"METR ORAS"},{"a":"11094704","o":"30968951","e":"10051954","l":"TORNOS","d":"PSAM-TORNS1954 Roldanas para compuerta","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-03","s":"METR ORAS"},{"a":"11094712","o":"30968993","e":"10130085","l":"TORNOS","d":"PSAM-TORN-Fabricar 6 tapones segun muest","f":"153580","n":"MAURICIO ELI RAMOS LOPEZ","p":"PRODUCCIÓN","c":"2026-08-03","s":"METR ORAS"},{"a":"11095064","o":"30969339","e":"10010642","l":"TORNOS","d":"PSAM-TOR- 6 Buje de 1\" X 1.1/2\" X 2\"","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-04","s":"METR ORAS"},{"a":"11095067","o":"30969341","e":"10010642","l":"TORNOS","d":"PSAM-TOR- 4 Buje de 1.3/4\" X 2.1/2\"","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-04","s":"METR ORAS"},{"a":"11095114","o":"30969426","e":"10010642","l":"TORNOS","d":"PSAM-TOR- 2 Pasador de 3/4 X 3.3/4\"","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-04","s":"METR ORAS"},{"a":"11095116","o":"30969428","e":"10010642","l":"TORNOS","d":"PSAM-TOR- 2 Pasador de 3/4 X 7.1/2\"","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-04","s":"METR ORAS"},{"a":"11095140","o":"30969437","e":"10130423","l":"TORNOS","d":"PSAM-TOR- 4 Pasador de 1.1/2\" X 6\"","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-04","s":"METR ORAS"},{"a":"11095145","o":"30969439","e":"10130423","l":"TORNOS","d":"PSAM-TOR- 4 Rodos de H según muestra","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-04","s":"METR ORAS"},{"a":"11095166","o":"30969823","e":"10020088","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE TAPONES","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-08-04","s":"METR ORAS"},{"a":"11095197","o":"30969843","e":"10070692","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE PASADOR Y BUJE","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-08-04","s":"METR ORAS"},{"a":"11095202","o":"30969845","e":"10130423","l":"TORNOS","d":"PSAM-TOR- 2 Pernos de enganche","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-04","s":"METR ORAS"},{"a":"11095217","o":"30969854","e":"11130036","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE ESCAMOSOS","f":"144274","n":"ANTONY YULIANY MONROY CANIJA","p":"PRODUCCIÓN","c":"2026-08-04","s":"METR ORAS"},{"a":"11095361","o":"30970906","e":"10060379","l":"TORNOS","d":"PSAM-TORNS379 NPT niple","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-06","s":"METR ORAS"},{"a":"11095362","o":"30970905","e":"10060659","l":"TORNOS","d":"PSAM-TORNS659 NPT nible","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-06","s":"METR ORAS"},{"a":"11095363","o":"30970904","e":"10060661","l":"TORNOS","d":"PSAM-TORNS661 NPT nible","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-06","s":"METR ORAS"},{"a":"11095366","o":"30970909","e":"10060388","l":"TORNOS","d":"PSAM-TORNS388 Niple NPT","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-07","s":"METR ORAS"},{"a":"11095367","o":"30970908","e":"10060658","l":"TORNOS","d":"PSAM-TORNS658 Niples NPT","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-07","s":"METR ORAS"},{"a":"11095368","o":"30970907","e":"10060374","l":"TORNOS","d":"PSAM-TORNS374 NPT nible","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-07","s":"METR ORAS"},{"a":"11095697","o":"30970930","e":"10130235","l":"TORNOS","d":"PSAM-TORN-fabricacion de 4 bujes de chum","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-08-06","s":"METR ORAS"},{"a":"11095767","o":"30971083","e":"10051644","l":"TORNOS","d":"PSAM-TORN-Fabricción de 2 nopples según","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-08-07","s":"METR ORAS"},{"a":"11095768","o":"30971084","e":"10051644","l":"TORNOS","d":"PSAM-TORN-Fabricación de roldanas para s","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-08-07","s":"METR ORAS"},{"a":"11095850","o":"30971496","e":"10130515","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE TAPÓN JACTO","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-07","s":"METR ORAS"},{"a":"11096244","o":"30972643","e":"10010642","l":"TORNOS","d":"PSAM-TORN-Fabricación de 6 plancas de ar","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-10","s":"METR ORAS"},{"a":"11096245","o":"30972644","e":"10010642","l":"TORNOS","d":"PSAM-TORN-Fabricar 4 pasadores de 3/4 x","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-10","s":"METR ORAS"},{"a":"11096360","o":"30973184","e":"11130035","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE PASADORES","f":"144274","n":"ANTONY YULIANY MONROY CANIJA","p":"PRODUCCIÓN","c":"2026-08-11","s":"METR ORAS"},{"a":"11096361","o":"30973185","e":"11130035","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES","f":"144274","n":"ANTONY YULIANY MONROY CANIJA","p":"PRODUCCIÓN","c":"2026-08-11","s":"METR ORAS"},{"a":"11096362","o":"30973186","e":"11130035","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE MUÑÓN P/BUFA","f":"144274","n":"ANTONY YULIANY MONROY CANIJA","p":"PRODUCCIÓN","c":"2026-08-11","s":"METR ORAS"},{"a":"11096364","o":"30973187","e":"10010642","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE PUNTAS CÓNICAS","f":"144274","n":"ANTONY YULIANY MONROY CANIJA","p":"PRODUCCIÓN","c":"2026-08-11","s":"METR ORAS"},{"a":"11096456","o":"30973289","e":"10070679","l":"TORNOS","d":"PSAM-TORN.Fabricacion de 1 mango segun","f":"146403","n":"LUIS ALEXANDER MORENO ALVARADO","p":"SERVICIOS DE APOYO","c":"2026-08-11","s":"METR ORAS"},{"a":"11096555","o":"30973509","e":"10010746","l":"TORNOS","d":"PSAM-TORN-Fabricación de 6 esparragos se","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-08-11","s":"METR ORAS"},{"a":"11096819","o":"30974002","e":"10020147","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE ANILLO INFERIOR","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-08-13","s":"METR ORAS"},{"a":"11096820","o":"30974003","e":"10020147","l":"CNC","d":"PSAM-CNC-CORTE DE PIEZAS DIVERSAS","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-08-13","s":"METR ORAS"},{"a":"11096825","o":"30974004","e":"10020147","l":"CNC","d":"PSAM-CNC-CORTE DE PISO SECCIÓN 3","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-08-13","s":"METR ORAS"},{"a":"11096831","o":"30974007","e":"10020148","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE ANILLO INFERIOR","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-08-13","s":"METR ORAS"},{"a":"11096832","o":"30974008","e":"10020148","l":"CNC","d":"PSAM-CNC-CORTE DE PIEZAS DIVERSAS","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-08-13","s":"METR ORAS"},{"a":"11096835","o":"30974010","e":"10020148","l":"CNC","d":"PSAM-CNC-CORTE DE PISO SECCIÓN 3","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-08-13","s":"METR ORAS"},{"a":"11097195","o":"30974679","e":"10020141","l":"CNC","d":"PSAM-CNC-CORTE DE LÁMIA P/ PIEZAS","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-14","s":"METR ORAS"},{"a":"11097196","o":"30974680","e":"10020141","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE PISO SECCIÓN 3","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-14","s":"METR ORAS"},{"a":"11097198","o":"30974682","e":"10020141","l":"CNC","d":"PSAM-CNC-CORTE DE LAMINA P/ CANASTA","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-14","s":"METR ORAS"},{"a":"11097199","o":"30974683","e":"10020141","l":"CNC","d":"PSAM-CNC-CORTE DE LÁMINA P/ CANASTA","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-14","s":"METR ORAS"},{"a":"11097200","o":"30974684","e":"10020141","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE FALDÓN LAT. EXTE","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-14","s":"METR ORAS"},{"a":"11097201","o":"30974685","e":"10020142","l":"CNC","d":"PSAM-CNC-CORTE DE LÁMINA PARA PIEZAS","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-14","s":"METR ORAS"},{"a":"11097202","o":"30974686","e":"10020142","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE PISO SECCIÓN 3","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-14","s":"METR ORAS"},{"a":"11097205","o":"30974688","e":"10020142","l":"CNC","d":"PSAM-CNC-CORTE DE LÁMINA P/ ZAPATA","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-14","s":"METR ORAS"},{"a":"11097207","o":"30974690","e":"10020142","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE FALDÓN LAT. EXTE","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-14","s":"METR ORAS"},{"a":"11097450","o":"30975050","e":"10010746","l":"TORNOS","d":"PSAM-TOR- Perforacion de 6 agujeros","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-08-17","s":"METR ORAS"},{"a":"11097502","o":"30975166","e":"11070043","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE NIPPLES","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-08-17","s":"METR ORAS"},{"a":"11097574","o":"30975263","e":"10060354","l":"TORNOS","d":"PSAM-TORNS354 EMBOLO DE CULATA","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-17","s":"METR ORAS"},{"a":"11097575","o":"30975262","e":"10051954","l":"TORNOS","d":"PSAM-TORNS1954 EMBOLOS DE CULATA","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-08-17","s":"METR ORAS"},{"a":"11097826","o":"30976110","e":"10020128","l":"TORNOS","d":"PSAM-TORN-Fabricar 1 buje de 1.1/2","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-08-18","s":"METR ORAS"},{"a":"11097971","o":"30976162","e":"10070121","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE ROSCA A BASE","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-08-19","s":"METR ORAS"},{"a":"11098181","o":"30976743","e":"10020142","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE ANILLOS","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-20","s":"METR ORAS"},{"a":"11098258","o":"30977065","e":"10051644","l":"TORNOS","d":"PSAM-TOR- Fabricacion de 8 escamosos","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-08-20","s":"METR ORAS"},{"a":"11098361","o":"30977493","e":"10020088","l":"CNC","d":"PSAM-CNC-CORTE DE HEMBRA P/MARCO DE CAJA","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-08-21","s":"METR ORAS"},{"a":"11098607","o":"30977966","e":"10081309","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BISAGRAS","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-24","s":"METR ORAS"},{"a":"11098608","o":"30977967","e":"10051644","l":"TORNOS","d":"PSAM-TORN-Fabricar 2 coplas de 2 x 3","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-08-24","s":"METR ORAS"},{"a":"11098782","o":"30978045","e":"10010623","l":"TORNOS","d":"PSAM-TORN-REVISIÓN DE PASADOR Y PERFORAR","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-24","s":"METR ORAS"},{"a":"11098924","o":"30978095","e":"10130345","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de 22 bujes","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-25","s":"METR ORAS"},{"a":"11098927","o":"30978096","e":"10130345","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de 8 Pasadores","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-25","s":"METR ORAS"},{"a":"11098928","o":"30978101","e":"10130345","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de 8 rodos","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-25","s":"METR ORAS"},{"a":"11098930","o":"30978104","e":"10130400","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de 8 rodos","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-25","s":"METR ORAS"},{"a":"11098937","o":"30978112","e":"10070259","l":"TORNOS","d":"PSAM-TORN-Fabricar 6 visagras de cartuch","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-08-25","s":"METR ORAS"},{"a":"11098939","o":"30978113","e":"10070258","l":"TORNOS","d":"PSAM-TORN-Fabricar 6 visagras de cartuch","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-08-25","s":"METR ORAS"},{"a":"11098978","o":"30978130","e":"10020148","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES Y PASADOR","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-08-25","s":"METR ORAS"},{"a":"11098979","o":"30978131","e":"10020147","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES Y PASADOR","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-08-25","s":"METR ORAS"},{"a":"11098990","o":"30978134","e":"10050025","l":"TORNOS","d":"PSAM-TORN-Rectificar polea","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-08-25","s":"METR ORAS"},{"a":"11099019","o":"30978151","e":"10020148","l":"TORNOS","d":"PSAM-TOR- Fabricacion de 6 bujes","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-08-25","s":"METR ORAS"},{"a":"11099034","o":"30977545","e":"10010617","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de 1 roldana segu","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-08-26","s":"METR ORAS"},{"a":"11099081","o":"","e":"10020088","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES P/FALDON","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-08-26","s":"METR"},{"a":"11099164","o":"30978192","e":"10010485","l":"TORNOS","d":"PSAM-TOR- 20 Bujes de; 1.1/4\" X 2\" X 2\"","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-26","s":"METR ORAS"},{"a":"11099177","o":"30978195","e":"10010485","l":"TORNOS","d":"PSAM-TOR- 4 Bujes de; 1.1/4\" X 2\" X 2.1","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-26","s":"METR ORAS"},{"a":"11099179","o":"30978196","e":"10010485","l":"TORNOS","d":"PSAM-TOR- 4 Buje de; 1\" X 2\" X 1.1/4\"","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-26","s":"METR ORAS"},{"a":"11099184","o":"30978199","e":"10010485","l":"TORNOS","d":"PSAM-TOR- 8 Bujes de; 1.1/4\" X 2\" X 1\"","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-26","s":"METR ORAS"},{"a":"11099187","o":"30978203","e":"10010485","l":"TORNOS","d":"PSAM-TOR- 24 Bujes de; 3/4\" X 1.1/2\"","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-26","s":"METR ORAS"},{"a":"11099347","o":"30978287","e":"10010484","l":"TORNOS","d":"PSAM-TOR- Fabricación de base para senso","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-27","s":"METR ORAS"},{"a":"11099437","o":"30978348","e":"10020142","l":"TORNOS","d":"PSAM-TORN-Fabricar bushing inferior de","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-08-27","s":"METR ORAS"},{"a":"11099508","o":"30978360","e":"10050025","l":"TORNOS","d":"PSAM-TORN-Seguimiento de rosca de","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-08-27","s":"METR ORAS"},{"a":"11099647","o":"30978404","e":"10130168","l":"TORNOS","d":"PSAM-TORN-PERFORACIÓN DE PIECITOS","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-08-28","s":"METR ORAS"},{"a":"11099735","o":"30978456","e":"10020150","l":"TORNOS","d":"PSAM-TOR- 24 ajustes para divisor 1/14","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-08-28","s":"METR ORAS"},{"a":"11099736","o":"30978461","e":"10020150","l":"TORNOS","d":"PSAM-TOR- 8 arandelas para cojinete","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-08-28","s":"METR ORAS"},{"a":"11099745","o":"30978479","e":"10020151","l":"TORNOS","d":"PSAM-TOR- 24 ajustes para divisor 1/14","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-08-28","s":"METR ORAS"},{"a":"11099747","o":"30978480","e":"10020151","l":"TORNOS","d":"PSAM-TOR- 8 arandelas para cojinete","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-08-28","s":"METR ORAS"},{"a":"11099813","o":"30978545","e":"10010746","l":"TORNOS","d":"PSAM-TORNS-Perforar Aro","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-08-29","s":"METR ORAS"},{"a":"11099851","o":"30978588","e":"10130476","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de 4 fiting segun","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-08-29","s":"METR ORAS"},{"a":"11099970","o":"30978838","e":"10020087","l":"TORNOS","d":"PSAM-TORN-Fabricar 4 bujes para soporte","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-08-31","s":"METR ORAS"},{"a":"11099975","o":"30978847","e":"10130533","l":"TORNOS","d":"PSAM-TORN-Fabricar 4 bisagras de 3/4 x 3","f":"144958","n":"LUIS ANTONIO BEMBES","p":"PRODUCCIÓN","c":"2026-08-31","s":"METR ORAS"},{"a":"11099981","o":"30978848","e":"10070765","l":"TORNOS","d":"PSAM-TOR- Fabricacion de un pasamanos","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100028","o":"30978864","e":"10080723","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES P/ LANZA","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100030","o":"30978865","e":"10080508","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES P/ LANZA","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100031","o":"30978867","e":"10081275","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES P/ LANZA","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100032","o":"30978870","e":"10081254","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES P/ LANZA","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100033","o":"","e":"10130452","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE ROLDANAS","f":"153580","n":"MAURICIO ELI RAMOS LOPEZ","p":"PRODUCCIÓN","c":"2026-08-31","s":"METR"},{"a":"11100034","o":"","e":"10130452","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE PASADORES","f":"153580","n":"MAURICIO ELI RAMOS LOPEZ","p":"PRODUCCIÓN","c":"2026-08-31","s":"METR"},{"a":"11100036","o":"","e":"10130452","l":"TORNOS","d":"PSAM-TORN-TORNEAR BUFA","f":"153580","n":"MAURICIO ELI RAMOS LOPEZ","p":"PRODUCCIÓN","c":"2026-08-31","s":"METR"},{"a":"11100109","o":"30978902","e":"10020147","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE PASADORES","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-08-31","s":"METR ORAS"},{"a":"11100117","o":"30978905","e":"10081275","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.3","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100119","o":"30978907","e":"10081254","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.3","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100120","o":"30978908","e":"10081250","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.3","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100122","o":"30978909","e":"10081282","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.3","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100124","o":"30978910","e":"10080738","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.3","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100126","o":"30978911","e":"10080733","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.3","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100127","o":"30978913","e":"10081299","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.3","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100128","o":"30978915","e":"10081310","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.3","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100129","o":"30978916","e":"10081243","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.3","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100130","o":"30978917","e":"10081277","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.3","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100131","o":"30978918","e":"10081275","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.7","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100132","o":"30978919","e":"10081254","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.7","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100133","o":"30978922","e":"10081250","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.7","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100135","o":"30978923","e":"10081282","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.7","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100137","o":"30978924","e":"10080738","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.7","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100138","o":"30978926","e":"10080733","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.7","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100139","o":"30978929","e":"10081299","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.7","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100140","o":"30978930","e":"10081310","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.7","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100142","o":"30978932","e":"10081243","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.7","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100144","o":"30978933","e":"10081277","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 4 dados de 1.7","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-08-31","s":"METR ORAS"},{"a":"11100166","o":"30978946","e":"10130082","l":"TORNOS","d":"PSAM-TORN-Fabricar 3 escamosos segun mue","f":"153580","n":"MAURICIO ELI RAMOS LOPEZ","p":"PRODUCCIÓN","c":"2026-08-31","s":"METR ORAS"},{"a":"11100340","o":"30979058","e":"10130471","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES","f":"153580","n":"MAURICIO ELI RAMOS LOPEZ","p":"PRODUCCIÓN","c":"2026-09-01","s":"METR ORAS"},{"a":"11100388","o":"30979076","e":"10020096","l":"TORNOS","d":"PSAM-TORN-PERFORACIÓN DE BRIDAS","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-01","s":"METR ORAS"},{"a":"11100449","o":"30979104","e":"10081254","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE PIN MASTER","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-02","s":"METR ORAS"},{"a":"11100467","o":"30979125","e":"10130191","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE FITTING","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-02","s":"METR ORAS"},{"a":"11100630","o":"","e":"10130471","l":"TORNOS","d":"PSAM-TORN-PERFORACIÓN A PASADORES","f":"153580","n":"MAURICIO ELI RAMOS LOPEZ","p":"PRODUCCIÓN","c":"2026-09-02","s":"METR"},{"a":"11100633","o":"","e":"10130471","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES","f":"153580","n":"MAURICIO ELI RAMOS LOPEZ","p":"PRODUCCIÓN","c":"2026-09-02","s":"METR"},{"a":"11100639","o":"30979167","e":"10051149","l":"TORNOS","d":"PSAM-TOR- Fabricacion de 2 Perillas","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-09-02","s":"METR ORAS"},{"a":"11100640","o":"30979168","e":"10051149","l":"TORNOS","d":"PSAM-TOR- Fabricacions de 2 niples","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-09-02","s":"METR ORAS"},{"a":"11100705","o":"30979179","e":"10130215","l":"TORNOS","d":"PSAM-TOR- Fabricacion de 2 topes","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-09-03","s":"METR ORAS"},{"a":"11100725","o":"30979203","e":"10020148","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE ACOPLE P/ACUMUL","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-03","s":"METR ORAS"},{"a":"11100776","o":"30979211","e":"10020141","l":"CNC","d":"PSAM-CNC-CORTE DE BARBATANAS P/TUMBADOR","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-03","s":"METR ORAS"},{"a":"11100867","o":"30979273","e":"10080676","l":"TORNOS","d":"PSAM-TORN-Fabricar 1 juego de bujes","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-03","s":"METR ORAS"},{"a":"11100868","o":"30979277","e":"10080883","l":"TORNOS","d":"PSAM-TORN-Fabricar 1 juego de bujes","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-03","s":"METR ORAS"},{"a":"11100869","o":"30979275","e":"10020148","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN pasadores","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-03","s":"METR ORAS"},{"a":"11100870","o":"30979278","e":"10080740","l":"TORNOS","d":"PSAM-TORN-Fabricar 1 juego de bujes","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-03","s":"METR ORAS"},{"a":"11100874","o":"30979287","e":"10020147","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN pasadores","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-03","s":"METR ORAS"},{"a":"11100880","o":"30979305","e":"10020149","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN pasadores","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-03","s":"METR ORAS"},{"a":"11100915","o":"30979350","e":"10130438","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE ROSCA CORRIDA","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-03","s":"METR ORAS"},{"a":"11100994","o":"30979398","e":"10020096","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES P/MACHETE","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-04","s":"METR ORAS"},{"a":"11100995","o":"30979399","e":"10020096","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE TORNAMEZA","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-04","s":"METR ORAS"},{"a":"11101000","o":"30979403","e":"10020096","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE BLINDAJE","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-04","s":"METR ORAS"},{"a":"11101003","o":"30979405","e":"10020096","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE CARGADORES","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-04","s":"METR ORAS"},{"a":"11101004","o":"30979406","e":"10020096","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE TREN DE MOLINOS","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-04","s":"METR ORAS"},{"a":"11101346","o":"30979513","e":"10051014","l":"TORNOS","d":"PSAM-TORN-Rectificar agujeros en bufas","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-09-07","s":"METR ORAS"},{"a":"11101497","o":"30979610","e":"10030036","l":"TORNOS","d":"PSAM-TORN-Instalacion de buje","f":"138530","n":"DAVID AROLDO GONZALEZ GARCIA","p":"COSECHA","c":"2026-09-07","s":"METR ORAS"},{"a":"11101608","o":"30979648","e":"10010515","l":"TORNOS","d":"PSAM-TOR- Fabricacion de un pasador 1","f":"153340","n":"LUIS ARNOLDO PAZ MARTINEZ","p":"COSECHA","c":"2026-09-08","s":"METR ORAS"},{"a":"11101616","o":"30979651","e":"10010515","l":"TORNOS","d":"PSAM-TOR- Perforacion de lamina de 1 1/2","f":"153340","n":"LUIS ARNOLDO PAZ MARTINEZ","p":"COSECHA","c":"2026-09-08","s":"METR ORAS"},{"a":"11101630","o":"30979685","e":"10060369","l":"TORNOS","d":"PSAM-TORNS369 TAPON DE ARBUTO","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101631","o":"30979684","e":"10060373","l":"TORNOS","d":"PSAM-TORNS373 TAPONES DE ARBUTO","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101632","o":"30979683","e":"10060376","l":"TORNOS","d":"PSAM-TORNS376 TAPONES DE ARBUTO","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101633","o":"30979682","e":"10060377","l":"TORNOS","d":"PSAM-TORNS377 TAPONES DE ARBUTO","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101634","o":"30979681","e":"10060380","l":"TORNOS","d":"PSAM-TORNS380 TAPONES DE ARBUTO","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101635","o":"30979680","e":"10060382","l":"TORNOS","d":"PSAM-TORNS382 TAPONES DE ARBUTO","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101636","o":"30977559","e":"10060383","l":"TORNOS","d":"PSAM-TORNS383 TAPONES DE ARBUTO","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101637","o":"30977558","e":"10060384","l":"TORNOS","d":"PSAM-TORNS384 TAPONES DE ARBUTO","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101638","o":"30979686","e":"10051957","l":"TORNOS","d":"PSAM-TORNS1957 TUERCA P/VALVULA","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101725","o":"30979861","e":"10020096","l":"CNC","d":"PSAM-CNC-Fabricar 2 faldones de divisore","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-08","s":"METR ORAS"},{"a":"11101729","o":"30979906","e":"10010625","l":"TORNOS","d":"PSAM-TORN-Realizar 6 fitings según muest","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-08","s":"METR ORAS"},{"a":"11101734","o":"30979696","e":"10060667","l":"TORNOS","d":"PSAM-TORNS667 PARABRISAS TAPONES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101735","o":"30979695","e":"10060658","l":"TORNOS","d":"PSAM-TORNS658 PARABRISAS TAPONES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101736","o":"30979694","e":"10060369","l":"TORNOS","d":"PSAM-TORNS369 PARABRISAS TAPONES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101737","o":"30979693","e":"10060666","l":"TORNOS","d":"PSAM-TORNS666 PARABRISAS TAPONES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101738","o":"30979692","e":"10060659","l":"TORNOS","d":"PSAM-TORNS659 PARABRISAS TAPONES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-08","s":"METR ORAS"},{"a":"11101882","o":"30979957","e":"10020087","l":"TORNOS","d":"PSAM-TOR- corte 5 pasadores para seguro","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-09","s":"METR ORAS"},{"a":"11101908","o":"30979959","e":"10040440","l":"TORNOS","d":"PSAM-TORN-Rectificación de collarin de c","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-09-09","s":"METR ORAS"},{"a":"11101944","o":"30979969","e":"10130443","l":"TORNOS","d":"PSAM-TORN-Fabricación de 4 ejes según mu","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-09","s":"METR ORAS"},{"a":"11101999","o":"30980054","e":"10020148","l":"TORNOS","d":"PSAM-TORNS-Rectificar roldana para segur","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-09","s":"METR ORAS"},{"a":"11102003","o":"30980058","e":"10020142","l":"TORNOS","d":"PSAM-TORN-Fabricar 2 reductores de 5/8","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-09","s":"METR ORAS"},{"a":"11102018","o":"30980072","e":"10060351","l":"TORNOS","d":"PSAM-TORN-351balancines pequeños","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-09","s":"METR ORAS"},{"a":"11102021","o":"30980082","e":"10052032","l":"CNC","d":"PSAM-CNCS2032 VALANCINES PEQUEÑOS","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-09","s":"METR ORAS"},{"a":"11102022","o":"30980081","e":"10052033","l":"TORNOS","d":"PSAM-TORNS2033 VALANCINES PEQUEÑOS","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-09","s":"METR ORAS"},{"a":"11102023","o":"30980080","e":"10052034","l":"TORNOS","d":"PSAM-TORNS2034 VALANCINES PEQUEÑOS","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-09","s":"METR ORAS"},{"a":"11102024","o":"30979699","e":"10060350","l":"TORNOS","d":"PSAM-TORNS350 VALANCINES PEQUEÑOS","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-09","s":"METR ORAS"},{"a":"11102025","o":"","e":"10052032","l":"CNC","d":"PSAM-CNC2032 VALANCINES PEQUEÑOS","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-09","s":"MEAB"},{"a":"11102027","o":"30980084","e":"10010755","l":"TORNOS","d":"PSAM-TOR-  fabricación de 2 pernos","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-10","s":"METR ORAS"},{"a":"11102028","o":"30980085","e":"10130179","l":"TORNOS","d":"PSAM-TOR- 2 escamosos de 2\"","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-10","s":"METR ORAS"},{"a":"11102029","o":"30980098","e":"10060353","l":"CNC","d":"PSAM-CNC353 VALANCINES PEQUEÑOS","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102039","o":"30980077","e":"10020149","l":"CNC","d":"PSAM-CNC- Fabricacion de 1 anillo de ex","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-09","s":"METR ORAS"},{"a":"11102040","o":"30980079","e":"10020149","l":"CNC","d":"PSAM-CNC- Fabricacion de 1 piso de secci","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-09","s":"METR ORAS"},{"a":"11102047","o":"30980110","e":"10020149","l":"CNC","d":"PSAM-CNC- Fabricacion de 2 blindajes de","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-09","s":"METR ORAS"},{"a":"11102048","o":"30980113","e":"10020142","l":"TORNOS","d":"PSAM-TORN-Fabricar 4 espaciadores","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-09","s":"METR ORAS"},{"a":"11102050","o":"30980116","e":"10020149","l":"CNC","d":"PSAM-CNC- Fabricacion de 1 canasta de el","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-09","s":"METR ORAS"},{"a":"11102056","o":"30980127","e":"10020147","l":"TORNOS","d":"PSAM-TORN-Rectificar 2 trunio","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-09","s":"METR ORAS"},{"a":"11102127","o":"30980163","e":"10020138","l":"TORNOS","d":"PSAM-TORN-madrilar tornamesa movil","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-10","s":"METR ORAS"},{"a":"11102160","o":"30980097","e":"10060355","l":"CNC","d":"PSAM-CNC355 VALANCINES PEQUEÑOS","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102161","o":"30980096","e":"10060352","l":"CNC","d":"PSAM-CNC352 VALANCINES PEQUEÑOS","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102162","o":"30980095","e":"10060349","l":"CNC","d":"PSAM-CNC349 VALANCINES PEQUEÑOS","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102163","o":"30980094","e":"10060354","l":"CNC","d":"PSAM-CNC354 VALANCINES PEQUEÑOS","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-10","s":"METR ORAS"},{"a":"11102164","o":"30980086","e":"10130179","l":"TORNOS","d":"PSAM-TOR- 3 Niples de 2\"","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-10","s":"METR ORAS"},{"a":"11102168","o":"30980090","e":"10020147","l":"TORNOS","d":"PSAM-TOR- 2 pasadores de tumbador","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-10","s":"METR ORAS"},{"a":"11102169","o":"30980091","e":"10020147","l":"TORNOS","d":"PSAM-TOR- 4 esparragos de volante","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-10","s":"METR ORAS"},{"a":"11102170","o":"30980092","e":"10010418","l":"TORNOS","d":"PSAM-TOR- Fabricacion de bujes","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-09-10","s":"METR ORAS"},{"a":"11102171","o":"30980093","e":"10010402","l":"TORNOS","d":"PSAM-TOR- Fabricacion de bujes","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-09-10","s":"METR ORAS"},{"a":"11102226","o":"30980205","e":"10080726","l":"TORNOS","d":"PSAM-TORN-Rectificación de pin master","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102230","o":"30980221","e":"10020097","l":"TORNOS","d":"PSAM-TORN-fabricacion de reducidor segun","f":"138530","n":"DAVID AROLDO GONZALEZ GARCIA","p":"COSECHA","c":"2026-09-10","s":"METR ORAS"},{"a":"11102238","o":"30980223","e":"10020096","l":"TORNOS","d":"PSAM-TORN-Rectificar eje y balanceo","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-10","s":"METR ORAS"},{"a":"11102245","o":"30980239","e":"10052032","l":"CNC","d":"PSAM-CNC2032 BALANCINES GRANDES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102246","o":"30980240","e":"10052033","l":"CNC","d":"PSAM-CNC2033 VALANCINES GRANDES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102247","o":"30980238","e":"10052034","l":"CNC","d":"PSAM-CNC2034 VALANCINES GRANDES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102248","o":"30980237","e":"10060350","l":"CNC","d":"PSAM-CNC350 VALANCINES GRANDES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102249","o":"30980236","e":"10060351","l":"CNC","d":"PSAM-CNC351 VALANCINES GRANDES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102250","o":"30980235","e":"10060353","l":"CNC","d":"PSAM-CNC353 VALANCINES GRANDES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102251","o":"30980234","e":"10060355","l":"CNC","d":"PSAM-CNC355 VALANCINES GRANDES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102252","o":"30980233","e":"10060352","l":"CNC","d":"PSAM-CNC352 VALANCINES GRANDES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102253","o":"30980232","e":"10060349","l":"CNC","d":"PSAM-CNC349 VALANCINES GRANDES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-10","s":"METR ORAS"},{"a":"11102254","o":"30980231","e":"10060354","l":"CNC","d":"PSAM-CNC354 VALANCINES GRANDES","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-10","s":"METR ORAS"},{"a":"11102262","o":"30980245","e":"10052046","l":"CNC","d":"PSAM-CNC2046 VALANCIBES NORMALES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-11","s":"METR ORAS"},{"a":"11102263","o":"30980248","e":"10052048","l":"CNC","d":"PSAM-CNC2048 VALANCINES NORMALES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-11","s":"METR ORAS"},{"a":"11102264","o":"30980247","e":"10052049","l":"TORNOS","d":"PSAM-TORNS2049 VALANCINES NORMALES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-11","s":"METR ORAS"},{"a":"11102265","o":"30980246","e":"10051954","l":"CNC","d":"PSAM-CNC1954 VALANCINES NORMALES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-11","s":"METR ORAS"},{"a":"11102266","o":"30980244","e":"10051953","l":"CNC","d":"PSAM-CNC1953 VALANCINES NORMALES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-11","s":"METR ORAS"},{"a":"11102464","o":"30980324","e":"10130210","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de 1 barra de 2*","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-09-11","s":"METR ORAS"},{"a":"11102465","o":"30980325","e":"10130211","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de 1 barra de 2*","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-09-11","s":"METR ORAS"},{"a":"11102467","o":"30980327","e":"10130258","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de 1 barra de 2*","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-09-11","s":"METR ORAS"},{"a":"11102503","o":"30980342","e":"10130181","l":"TORNOS","d":"PSAM-TORNS-Fabricación de tornillo sin f","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-11","s":"METR ORAS"},{"a":"11102511","o":"30980345","e":"10020097","l":"CNC","d":"PSAM-CNC- Fabricacion de blindaje interi","f":"138530","n":"DAVID AROLDO GONZALEZ GARCIA","p":"COSECHA","c":"2026-09-11","s":"METR ORAS"},{"a":"11102512","o":"30980346","e":"10010755","l":"TORNOS","d":"PSAM-TORNS-Rectificar agujeros de la bas","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-11","s":"METR ORAS"},{"a":"11102621","o":"30980249","e":"10051954","l":"TORNOS","d":"PSAM-TORNS1954 GANCHOS PARA COMPUERTA","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-14","s":"METR ORAS"},{"a":"11102622","o":"30980250","e":"10051954","l":"TORNOS","d":"PSAM-TORNS1954 GANCHOS PARA BUJES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-14","s":"METR ORAS"},{"a":"11102706","o":"30980415","e":"10101052","l":"TORNOS","d":"PSAM-TORN-Fabricar bujes de visagras","f":"149048","n":"BEVERLY AMERICA JIMENEZ CASTRILLO","p":"SERVICIOS DE APOYO","c":"2026-09-12","s":"METR ORAS"},{"a":"11102798","o":"30980452","e":"10051149","l":"TORNOS","d":"PSAM-TORN-Fabricación de coplas según mu","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-14","s":"METR ORAS"},{"a":"11102838","o":"30980470","e":"10010702","l":"TORNOS","d":"PSAM-TOR- Fabricación de pin bola","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-14","s":"METR ORAS"},{"a":"11102839","o":"30980471","e":"10010754","l":"TORNOS","d":"PSAM-TOR- Fabricación de pin bola","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-14","s":"METR ORAS"},{"a":"11102841","o":"30980472","e":"10010712","l":"TORNOS","d":"PSAM-TOR-  Fabricación de pin bola","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-14","s":"METR ORAS"},{"a":"11102866","o":"30980479","e":"10020148","l":"TORNOS","d":"PSAM-TORNS-Pulido de maza de caja picado","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-14","s":"METR ORAS"},{"a":"11102871","o":"30980481","e":"10020138","l":"TORNOS","d":"PSAM-TORNS-fabricacion pasadores central","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-14","s":"METR ORAS"},{"a":"11102991","o":"","e":"10020141","l":"TORNOS","d":"PSAM-TORN-PERFORACIÓN 2 PUNTA DIVISORES","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-16","s":"METR"},{"a":"11102993","o":"","e":"10130408","l":"TORNOS","d":"PSAM-TOR-  Fabricacion de 4 bujes de 5/8","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-16","s":"MEAB"},{"a":"11102995","o":"","e":"10130408","l":"TORNOS","d":"PSAM-TOR- Fabricacion de 4 bujes de 3/4","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-16","s":"MEAB"},{"a":"11102997","o":"","e":"10130408","l":"TORNOS","d":"PSAM-TOR- Fabricacion de 8 bujes de 5/8","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-16","s":"MEAB"},{"a":"11102941","o":"30980256","e":"10052034","l":"TORNOS","d":"PSAM-TORNS2034 PUNTAS TANDEM","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-16","s":"METR ORAS"},{"a":"11102942","o":"30980255","e":"10051731","l":"TORNOS","d":"PSAM-TORN1731 PUNTAS DE TANDEM","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-16","s":"METR ORAS"},{"a":"11102943","o":"30980254","e":"10051731","l":"TORNOS","d":"PSAM-TORNS1731 CENTRAL TANDEM","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-16","s":"METR ORAS"},{"a":"11103058","o":"30980572","e":"10020150","l":"CNC","d":"PSAM-CNC-Fabricación de 1 canasta de lam","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-16","s":"METR ORAS"},{"a":"11103061","o":"30980574","e":"10020151","l":"CNC","d":"PSAM-CNC-Fabricación de 1 canasta de lam","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-16","s":"METR ORAS"},{"a":"11103062","o":"30980575","e":"10020150","l":"CNC","d":"PSAM-CNC-Corte de 2 listones de 11\" x 48","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-16","s":"METR ORAS"},{"a":"11103063","o":"30980576","e":"10020150","l":"CNC","d":"PSAM-CNC-Corte de 2 listones de 11\" x 48","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-16","s":"METR ORAS"},{"a":"11103064","o":"","e":"10020096","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de bujes","f":"153340","n":"LUIS ARNOLDO PAZ MARTINEZ","p":"COSECHA","c":"2026-09-16","s":"METR"},{"a":"11103065","o":"30980578","e":"10020150","l":"CNC","d":"PSAM-CNC-Corte de 2 listones de 17\" de a","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-16","s":"METR ORAS"},{"a":"11103066","o":"30980579","e":"10020151","l":"CNC","d":"PSAM-CNC-Corte de 2 listones de 11\" x 48","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-16","s":"METR ORAS"},{"a":"11103067","o":"30980580","e":"10020151","l":"CNC","d":"PSAM-CNC-Corte de 2 listones de 17\" de a","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-16","s":"METR ORAS"},{"a":"11103097","o":"","e":"10130103","l":"TORNOS","d":"PSAM-TORN-Por fabricacion de 2 roldanas","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-09-16","s":"METR"},{"a":"11103156","o":"30980643","e":"10020148","l":"CNC","d":"PSAM-CNC- Fabricacion de roldana de caja","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-17","s":"METR ORAS"},{"a":"11103157","o":"30980645","e":"10010710","l":"CNC","d":"PSAM-CNC- corte de piezas para base","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-17","s":"METR ORAS"},{"a":"11103158","o":"30980646","e":"10010756","l":"CNC","d":"PSAM-CNC- corte de piezas para base","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-17","s":"METR ORAS"},{"a":"11103163","o":"30980652","e":"10020150","l":"CNC","d":"PSAM-CNC- Corte de bilidajes","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-17","s":"METR ORAS"},{"a":"11103164","o":"30980655","e":"10020151","l":"CNC","d":"PSAM-CNC- Corte de bilidajes","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-17","s":"METR ORAS"},{"a":"11103165","o":"30980656","e":"10020096","l":"CNC","d":"PSAM-CNC- Fabricacion de chasis de tren","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-17","s":"METR ORAS"},{"a":"11103167","o":"","e":"10030036","l":"TORNOS","d":"PSAM-TOR- Fabricacion de dos bujes","f":"138530","n":"DAVID AROLDO GONZALEZ GARCIA","p":"COSECHA","c":"2026-09-17","s":"MEAB"},{"a":"11103179","o":"","e":"10010571","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de bujes de base","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-17","s":"METR"},{"a":"11103187","o":"30980670","e":"10010755","l":"CNC","d":"PSAM-CNC- corte de protector para cruz d","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-17","s":"METR ORAS"},{"a":"11103188","o":"30980671","e":"10010710","l":"CNC","d":"PSAM-CNC- corte de protector para cruz d","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-17","s":"METR ORAS"},{"a":"11103205","o":"","e":"10020148","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de 2 fiting","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-17","s":"METR"},{"a":"11103208","o":"","e":"10020148","l":"TORNOS","d":"PSAM-TORNS-Fabricación de 2 pasadores de","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-17","s":"METR"},{"a":"11103351","o":"","e":"10020096","l":"TORNOS","d":"PSAM-TOR- Fabricacion de 2 piernas","f":"153340","n":"LUIS ARNOLDO PAZ MARTINEZ","p":"COSECHA","c":"2026-09-18","s":"MEAB"},{"a":"11103366","o":"","e":"10081284","l":"TORNOS","d":"PSAM-TORN-Fabricar 30 dados para platina","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-18","s":"METR"},{"a":"11103369","o":"","e":"10020141","l":"TORNOS","d":"PSAM-TORN-ABELLANAR PISTAS DE ELEVADOR","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-09-18","s":"METR"},{"a":"11103393","o":"","e":"10050025","l":"TORNOS","d":"PSAM-TORN-Fabricar 1 pitoreta con escamo","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-09-18","s":"METR"},{"a":"11103430","o":"","e":"10020089","l":"TORNOS","d":"PSAM-TOR- rectificar piernas de caja bas","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-18","s":"MEAB"},{"a":"11103431","o":"","e":"10020089","l":"TORNOS","d":"PSAM-TOR- fabricación de pasadores","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-18","s":"MEAB"},{"a":"11103459","o":"","e":"10020089","l":"TORNOS","d":"PSAM-TORN-fabricación de platos de eje t","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-18","s":"METR"},{"a":"11103470","o":"","e":"10010484","l":"TORNOS","d":"PSAM-TOR- Fabricacion de 10 puntas","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-18","s":"MEAB"},{"a":"11103471","o":"","e":"10010484","l":"TORNOS","d":"PSAM-TOR- Fabricacion de 6 pasamuros","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-18","s":"MEAB"},{"a":"11103472","o":"","e":"10010484","l":"TORNOS","d":"PSAM-TOR- Fabricacion de 10 puntas","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-18","s":"MEAB"},{"a":"11103473","o":"","e":"10010484","l":"TORNOS","d":"PSAM-TOR- Fabricacion de barra roscada","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-18","s":"MEAB"},{"a":"11103474","o":"","e":"10010484","l":"TORNOS","d":"PSAM-TOR-Fabricación de cuadrado para barra","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-18","s":"MEAB"},{"a":"11103475","o":"","e":"10130237","l":"TORNOS","d":"PSAM-TORN-barrenar 2 planchas con agujer","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-09-18","s":"METR"},{"a":"11103399","o":"30980805","e":"10052050","l":"CNC","d":"PSAM-CNC2050 BASE P/DIFERENCIALES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR ORAS"},{"a":"11103592","o":"","e":"10051930","l":"CNC","d":"PSAM-CNC-6 bases para estribo","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103594","o":"","e":"10051703","l":"CNC","d":"PSAM-CNC-6 bases para estribo","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103595","o":"","e":"10051707","l":"CNC","d":"PSAM-CNC-6 bases para estribo","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103596","o":"","e":"10051930","l":"CNC","d":"PSAM-CNC-Fabricación de 6 de bases para","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103597","o":"","e":"10051703","l":"CNC","d":"PSAM-CNC-Fabricación de 6 de bases para","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103598","o":"","e":"10051707","l":"CNC","d":"PSAM-CNC-Fabricación de 6 de bases para","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103600","o":"","e":"10051703","l":"CNC","d":"PSAM-CNC-Fabricacción de 6 estribos","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103601","o":"","e":"10051707","l":"CNC","d":"PSAM-CNC-Fabricacción de 6 estribos","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103602","o":"","e":"10051930","l":"CNC","d":"PSAM-CNC-Fabricacción de 1 liston de de","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103603","o":"","e":"10051703","l":"CNC","d":"PSAM-CNC-Fabricacción de 6 estribos","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103604","o":"","e":"10051703","l":"CNC","d":"PSAM-CNC-Fabricacción de 1 liston de de","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103605","o":"","e":"10051707","l":"CNC","d":"PSAM-CNC-Fabricacción de 1 liston de de","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR"},{"a":"11103620","o":"30980804","e":"10051935","l":"CNC","d":"PSAM-CNC1935 BASES P/ DIFERENCIALES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR ORAS"},{"a":"11103621","o":"30980803","e":"10051954","l":"CNC","d":"PSAM-CNC1954 BASES P/DIFERENCIALES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR ORAS"},{"a":"11103622","o":"30980802","e":"10052038","l":"CNC","d":"PSAM-CNC2038 BASES P/DIFERENCIALES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR ORAS"},{"a":"11103623","o":"30980801","e":"10051953","l":"CNC","d":"PSAM-CNC1953 BASES P/DIFERENCIALES","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-19","s":"METR ORAS"},{"a":"11103624","o":"","e":"10081279","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE TAPONES","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-21","s":"METR"},{"a":"11103731","o":"","e":"10130408","l":"TORNOS","d":"PSAM-TORN-FABRICAR 4 FITTING SEGÚN MUEST","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-21","s":"MEAB"},{"a":"11103732","o":"","e":"10020150","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BRIDAS","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-21","s":"METR"},{"a":"11103733","o":"","e":"10020151","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BRIDAS","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-21","s":"METR"},{"a":"11103767","o":"","e":"10020096","l":"TORNOS","d":"PSAM-TORN-Tornear 2 tubos de sin fin a m","f":"153340","n":"LUIS ARNOLDO PAZ MARTINEZ","p":"COSECHA","c":"2026-09-21","s":"METR"},{"a":"11103785","o":"","e":"10020089","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE PASADORES","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-21","s":"METR"},{"a":"11103857","o":"","e":"11080145","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-21","s":"METR"},{"a":"11103891","o":"","e":"10020141","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN TUERCAS PARA CHARL","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-09-21","s":"MEAB"},{"a":"11103900","o":"","e":"10020142","l":"TORNOS","d":"PSAM-TORN-fabricacion  de 4  pasamuros","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-09-21","s":"METR"},{"a":"11103901","o":"","e":"10020147","l":"TORNOS","d":"PSAM-TORN-Rectificación de 2 pasadores d","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-09-21","s":"METR"},{"a":"11103906","o":"","e":"10020097","l":"TORNOS","d":"PSAM-TORN-Rectificacion de 2 puntas de d","f":"138530","n":"DAVID AROLDO GONZALEZ GARCIA","p":"COSECHA","c":"2026-09-21","s":"METR"},{"a":"11103972","o":"","e":"10010756","l":"TORNOS","d":"PSAM-TORN-Rectificar agujeros de base de","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-22","s":"METR"},{"a":"11103975","o":"","e":"10020088","l":"TORNOS","d":"PSAM-TORN-Fabricación de 2 portaplatos","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-22","s":"METR"},{"a":"11103990","o":"","e":"10040338","l":"TORNOS","d":"PSAM-TORN-Rectificar tapadera y eje prop","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-09-22","s":"METR"},{"a":"11103991","o":"","e":"10040364","l":"TORNOS","d":"PSAM-TORN-Rectificar eje propulsor","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-09-22","s":"METR"},{"a":"11103992","o":"","e":"10020149","l":"CNC","d":"PSAM-CNC-8 Barbatanas en lámina de 1/4","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-22","s":"METR"},{"a":"11103993","o":"","e":"10020089","l":"CNC","d":"PSAM-CNC-8 Bridas en lámina de 3/4”","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-22","s":"METR"},{"a":"11103994","o":"","e":"10020089","l":"CNC","d":"PSAM-CNC-8 Barbatanas en lámina de 1/4”","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-22","s":"METR"},{"a":"11103995","o":"","e":"10020089","l":"CNC","d":"PSAM-CNC-8 Bridas en lámina de 3/4”","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-22","s":"METR"},{"a":"11103997","o":"","e":"10020151","l":"CNC","d":"PSAM-CNC-Fabricación de 8 peinetas y 8 p","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-22","s":"METR"},{"a":"11103998","o":"","e":"10020150","l":"TORNOS","d":"PSAM-TORN-Fabricar 2 portaplatos","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-22","s":"METR"},{"a":"11104005","o":"","e":"10070731","l":"TORNOS","d":"PSAM-TORN-Rectificar 2 bujes 4 x 2\" inte","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-22","s":"METR"},{"a":"11104008","o":"","e":"10020096","l":"TORNOS","d":"PSAM-TOR- Fabricacion de 4 flanges","f":"153340","n":"LUIS ARNOLDO PAZ MARTINEZ","p":"COSECHA","c":"2026-09-22","s":"MEAB"},{"a":"11104016","o":"","e":"10080599","l":"TORNOS","d":"PSAM-TORN-Rectificar 6 bujes a 2\"","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-22","s":"METR"},{"a":"11104068","o":"30981156","e":"10020096","l":"CNC","d":"PSAM-CNC- Fabricacion de base","f":"153340","n":"LUIS ARNOLDO PAZ MARTINEZ","p":"COSECHA","c":"2026-09-22","s":"METR ORAS"},{"a":"11104071","o":"","e":"10020149","l":"TORNOS","d":"PSAM-TORN-Fabricar 2 platos de eje de ta","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-22","s":"METR"},{"a":"11104073","o":"","e":"10020096","l":"TORNOS","d":"PSAM-TOR- Rectificacion de dos sin fines","f":"153340","n":"LUIS ARNOLDO PAZ MARTINEZ","p":"COSECHA","c":"2026-09-22","s":"MEAB"},{"a":"11104074","o":"30981161","e":"10020096","l":"CNC","d":"PSAM-CNC- Fabricacion de 4 flanges","f":"153340","n":"LUIS ARNOLDO PAZ MARTINEZ","p":"COSECHA","c":"2026-09-22","s":"METR ORAS"},{"a":"11104080","o":"30981166","e":"10020149","l":"CNC","d":"PSAM-CNC- corte de base de capuchón","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-22","s":"METR ORAS"},{"a":"11104090","o":"","e":"10130215","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJE","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-09-22","s":"METR"},{"a":"11104157","o":"","e":"10020150","l":"CNC","d":"PSAM-CNC- 8 bridas para rodaje","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-23","s":"METR"},{"a":"11104158","o":"","e":"10020151","l":"CNC","d":"PSAM-CNC- 8 bridas para rodaje","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-23","s":"METR"},{"a":"11104162","o":"30981206","e":"10020096","l":"CNC","d":"PSAM-CNC- Fabricacion de 3 barbatanas","f":"153340","n":"LUIS ARNOLDO PAZ MARTINEZ","p":"COSECHA","c":"2026-09-23","s":"METR ORAS"},{"a":"11104173","o":"","e":"10020089","l":"CNC","d":"PSAM-CNC-corte de 4 platos de machete la","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-23","s":"METR"},{"a":"11104213","o":"","e":"10020141","l":"TORNOS","d":"PSAM-TORN-Fabricar reducidor","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-09-23","s":"METR"},{"a":"11104221","o":"","e":"10020141","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE BALANCEO","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-09-23","s":"METR"},{"a":"11104248","o":"","e":"10060382","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE ESPEJOS P/TORNAM","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-23","s":"METR"},{"a":"11104251","o":"","e":"10060371","l":"CNC","d":"PSAM-CNCfabricación de espejos para torn","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-23","s":"METR"},{"a":"11104253","o":"","e":"10020151","l":"TORNOS","d":"PSAM-TORNS-Rectificacion de 2 pasadores","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-23","s":"METR"},{"a":"11104255","o":"","e":"10020150","l":"TORNOS","d":"PSAM-TORNS-Rectificacion de 2 pasadores","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-23","s":"METR"},{"a":"11104272","o":"","e":"10051920","l":"TORNOS","d":"PSAM-TORNS-Fabricar camisa a yugo de dif","f":"149048","n":"BEVERLY AMERICA JIMENEZ CASTRILLO","p":"SERVICIOS DE APOYO","c":"2026-09-23","s":"METR"},{"a":"11104286","o":"","e":"10020141","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE REDUCIDORES","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-09-23","s":"METR"},{"a":"11104287","o":"","e":"10020142","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE REDUCIDORES","f":"153232","n":"JOSE MANUEL HERRERA MORALES","p":"COSECHA","c":"2026-09-23","s":"METR"},{"a":"11104225","o":"","e":"10130424","l":"TORNOS","d":"PSAM-TOR- 4 Bushing 1'X1' 1/2X 1' 1/2","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-24","s":"MEAB"},{"a":"11104227","o":"","e":"10130424","l":"TORNOS","d":"PSAM-TOR- 2 poleas 5/8 X1' 1/2 X1' 1/8","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-24","s":"MEAB"},{"a":"11104229","o":"","e":"10130424","l":"TORNOS","d":"PSAM-TOR- 6  Shimp  1'  interno, 1'1/2","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-24","s":"MEAB"},{"a":"11104373","o":"","e":"10040441","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE COLLARÍN","f":"","n":"","p":"","c":"2026-09-24","s":"METR"},{"a":"11104374","o":"","e":"10040440","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE COLLARÍN","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-09-24","s":"METR"},{"a":"11104376","o":"","e":"10052035","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE ESE DE FRENOS","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-24","s":"METR"},{"a":"11104420","o":"","e":"10130424","l":"TORNOS","d":"PSAM-TOR- 6  Shimp 1' interno, 1' 1/2","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-24","s":"MEAB"},{"a":"11104427","o":"30981263","e":"10052118","l":"CNC","d":"PSAM-CNC2118 ESPEJO PARA TKRNAMESA","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-24","s":"METR ORAS"},{"a":"11104428","o":"30981264","e":"10051935","l":"TORNOS","d":"PSAM-TORNS1935 PINES DE FRENOS","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-24","s":"METR ORAS"},{"a":"11104465","o":"","e":"10020151","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE PORTAPEINETAS/PE","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-24","s":"METR"},{"a":"11104481","o":"","e":"10052035","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE BUJES DE TAND","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-24","s":"METR"},{"a":"11104484","o":"","e":"10020149","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE PASADORES","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-24","s":"METR"},{"a":"11104518","o":"","e":"10010485","l":"TORNOS","d":"PSAM-TOR- 4 Bujes de 3 ⅛ de largo","f":"123523","n":"SELVIN FERMIN LOPEZ GARCIA","p":"PRODUCCIÓN","c":"2026-09-24","s":"MEAB"},{"a":"11104520","o":"","e":"10020142","l":"TORNOS","d":"PSAM-TORN-BALANCEO DE RODO LISO","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-24","s":"METR"},{"a":"11104531","o":"","e":"10020150","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE DEFLECTORES","f":"124653","n":"ERICK DANIEL SANTOS HERNANDEZ","p":"COSECHA","c":"2026-09-24","s":"METR"},{"a":"11104532","o":"","e":"10020151","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE DEFLECTORES","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-24","s":"METR"},{"a":"11104567","o":"","e":"10020096","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE FLANGE P/PROTECT","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-25","s":"MEAB"},{"a":"11104568","o":"","e":"10020096","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE FLANGE","f":"101860","n":"JULIO ROBERTO HERNANDEZ SALGUERO","p":"COSECHA","c":"2026-09-25","s":"MEAB"},{"a":"11104569","o":"","e":"10020147","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE BARBATANAS","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-25","s":"METR"},{"a":"11104570","o":"","e":"10020149","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE BARBATANAS","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-25","s":"METR"},{"a":"11104571","o":"","e":"10020147","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE ACOPLES","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-25","s":"METR"},{"a":"11104580","o":"","e":"10010584","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE BASE P/EXTINTOR","f":"139389","n":"FRANKLIN IBRAIN GUTIERREZ QUEVEDO","p":"COSECHA","c":"2026-09-25","s":"METR"},{"a":"11104581","o":"","e":"10010585","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE BASE P/EXTINTOR","f":"","n":"","p":"","c":"2026-09-25","s":"METR"},{"a":"11104582","o":"","e":"10010621","l":"CNC","d":"PSAM-CNC-FABRICACIÓN DE BASE P/EXTINTOR","f":"149011","n":"STEFANY JACKELINE MENCOS PEREZ","p":"MAQUINARIA INDUSTRIAL","c":"2026-09-25","s":"METR"},{"a":"11104592","o":"30981268","e":"10052038","l":"TORNOS","d":"PSAM-TORSN2038 BUJES PARA PATA CLUTHC","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-25","s":"METR ORAS"},{"a":"11104601","o":"30981398","e":"10020097","l":"CNC","d":"PSAM-CNC- Fabricacion de 4 deflectores","f":"138530","n":"DAVID AROLDO GONZALEZ GARCIA","p":"COSECHA","c":"2026-09-25","s":"METR ORAS"},{"a":"11104632","o":"30981419","e":"10020148","l":"CNC","d":"PSAM-CNC- Dos flange segun muestra","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-25","s":"METR ORAS"},{"a":"11104633","o":"30981420","e":"10110128","l":"CNC","d":"PSAM-CNC- Cortes para extensiones","f":"145440","n":"LUIS PEDRO ZELADA CHEVEZ","p":"MAQUINARIA INDUSTRIAL","c":"2026-09-25","s":"METR ORAS"},{"a":"11104643","o":"","e":"10020089","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN Y ALINEACIÓN DE BU","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-25","s":"METR"},{"a":"11104666","o":"","e":"10020141","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUSHINES","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-25","s":"METR"},{"a":"11104676","o":"30981443","e":"10010550","l":"TORNOS","d":"PSAM-TORN-Fabricación de bujes y tornill","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-09-25","s":"METR ORAS"},{"a":"11104677","o":"","e":"10010550","l":"TORNOS","d":"PSAM-TORN-Fabricación de pin de timón se","f":"100473","n":"CARLOS FLORES GONZALES","p":"PRODUCCIÓN","c":"2026-09-25","s":"METR"},{"a":"11104686","o":"","e":"10080874","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE UN JUEGO DE BUJ","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-25","s":"METR"},{"a":"11104688","o":"","e":"10080664","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE UN JUEGO DE BUJ","f":"129141","n":"GERZON PEREZ LORANCA","p":"SERVICIOS DE APOYO","c":"2026-09-25","s":"METR"},{"a":"11104689","o":"","e":"10080743","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE UN JUEGO DE BUJ","f":"","n":"","p":"","c":"2026-09-25","s":"METR"},{"a":"11104691","o":"","e":"10051936","l":"TORNOS","d":"PSAM-TORN-Cambio de yugo de eje cardan.","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-25","s":"METR"},{"a":"11104741","o":"","e":"10020068","l":"TORNOS","d":"PSAM-TORN-AGRANDAMIENTO DE AGUJERO","f":"139278","n":"JONATAN ADOLFO LOPEZ YES","p":"COSECHA","c":"2026-09-26","s":"METR"},{"a":"11104742","o":"","e":"10130209","l":"TORNOS","d":"PSAM-TORN-RECTIFICACIÓN DE ROSCA A TORNI","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-09-26","s":"METR"},{"a":"11104811","o":"","e":"10130258","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de bujes","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-09-28","s":"METR"},{"a":"11104812","o":"","e":"10130258","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de Pasadores","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-09-28","s":"METR"},{"a":"11104822","o":"","e":"10020097","l":"TORNOS","d":"PSAM-TORNS-Fabricacion de Reducidores","f":"138530","n":"DAVID AROLDO GONZALEZ GARCIA","p":"COSECHA","c":"2026-09-28","s":"METR"},{"a":"11104829","o":"","e":"10040550","l":"TORNOS","d":"PSAM-TOR- Fabricacion de pin de barra","f":"","n":"","p":"","c":"2026-09-28","s":"MEAB"},{"a":"11104830","o":"","e":"10051150","l":"TORNOS","d":"PSAM-TOR-Fabricar 4 niples segun muestra","f":"136479","n":"CARLOS NEHEMIAS SUBUYUJ ROQUEL","p":"PRODUCCIÓN","c":"2026-09-28","s":"METR"},{"a":"11104835","o":"","e":"10020151","l":"TORNOS","d":"PSAM-TOR- Rectificacion de pierna de cor","f":"123450","n":"MARCOS DIONICIO NAVARRO BARAHONA","p":"COSECHA","c":"2026-09-28","s":"MEAB"},{"a":"11104846","o":"","e":"10010386","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE FITING","f":"","n":"","p":"","c":"2026-09-28","s":"METR"},{"a":"11104894","o":"30981565","e":"10052046","l":"CNC","d":"PSAM-CNC2046 BASES DE SOPORTE","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-28","s":"METR ORAS"},{"a":"11104895","o":"30981564","e":"10052051","l":"CNC","d":"PSAM-CNC2051 BASES DE SOPORTE","f":"","n":"","p":"","c":"2026-09-28","s":"METR ORAS"},{"a":"11104896","o":"30981563","e":"10052047","l":"CNC","d":"PSAM-CNC2047","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-28","s":"METR ORAS"},{"a":"11104897","o":"30981562","e":"10051936","l":"CNC","d":"PSAM-CNC1936 BASES DE SOPORTE","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-28","s":"METR ORAS"},{"a":"11104898","o":"30981561","e":"10052032","l":"CNC","d":"PSAM-CNC2032 BASES DE SOPORTE","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-28","s":"METR ORAS"},{"a":"11104899","o":"30981560","e":"10052034","l":"CNC","d":"PSAM-CNC 2034 BASES DENSOPORTE","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-28","s":"METR ORAS"},{"a":"11104901","o":"","e":"10052046","l":"CNC","d":"PSAM-CNC 2046 FLANSH PARA CLUTH","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-28","s":"METR ORAS"},{"a":"11104902","o":"","e":"10052051","l":"CNC","d":"PSAM-CNC2051 FLANSH PARA CLUTH","f":"","n":"","p":"","c":"2026-09-28","s":"METR ORAS"},{"a":"11104903","o":"","e":"10052047","l":"CNC","d":"PSAM-CNC 2047 FLANSH PARA CLUTH","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-28","s":"METR ORAS"},{"a":"11104904","o":"","e":"10051936","l":"CNC","d":"PSAM-CNC 1936 FLANSH PARA CLUTH PEQUEÑO","f":"120172","n":"JULIO FERNANDO TEJAX ELIAS","p":"SERVICIOS DE APOYO","c":"2026-09-28","s":"METR ORAS"},{"a":"11104916","o":"","e":"10130317","l":"TORNOS","d":"PSAM-TORN-FABRICACIÓN DE BUJES","f":"151226","n":"ABNER ISAI LOPEZ RECINOS","p":"PRODUCCIÓN","c":"2026-09-28","s":"METR"}];
+const MECANICOS = [
+  "JEINER OBDULIO CRISOSTOMO ROSALES",
+  "ANTONY JOSE MORALES LOPEZ",
+  "WILLIAN ENRIQUE MORALES SANCHEZ",
+  "BRYAN SERGIO DANIEL MADRIGALES GUILLEN",
+  "CHRISTIAN JOSUE RAMIREZ SAQUIC",
+  "HENRY DANIEL CHARUC RIAN",
+  "ROGELIO BERNABE MENCHU CAYAX",
+  "SERGIO ALEJANDRO RODAS",
+  "MARIO JESUS POZUELOS PALMA",
+  "DYLAN URIEL DEL CID PAMAL"
+];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store = { get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}} };
+
+let props = new Map(), segs = new Map();
+let db = null, dl = null, uid = null, canWrite = false, canAssign = false;
+let selResp; try { selResp = new Set(JSON.parse(store.get("prio.resp2") || "[]")); } catch(e){ selResp = new Set(); }
+let openSet; try { openSet = new Set(JSON.parse(store.get("prio.open") || "[]")); } catch(e){ openSet = new Set(); }
+const ui = { lab: store.get("prio.lab") || "", estado: "", q: "", mec: store.get("prio.mec") || "" };
+
+let NAMES = [...new Set(DATA.map(r => r.n).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+let FICHA = {}; DATA.forEach(r => { if (r.n && r.f) FICHA[r.n] = r.f; });
+const NONE = "__none";
+const key = n => n || NONE;
+let ALLKEYS = [...NAMES, NONE];
+const EST = { pendiente:"Necesita material", proceso:"En proceso", finalizado:"Finalizado" };
+const FRE = { pendiente:"Pendiente", hecho:"Hecho" };
+ui.vista = (location.hash === "#fresadora") ? "fre" : (store.get("prio.vista") || "resp");
+if (ui.vista === "fre") ui.vista = "resp";
+if (location.hash === "#solicitud") ui.vista = "sol";
+function setVista(v){ ui.vista = v; store.set("prio.vista", v); render(); window.scrollTo(0, document.getElementById("vistas").offsetTop - 8); }
+document.getElementById("vResp").addEventListener("click", () => setVista("resp"));
+document.getElementById("vFre").addEventListener("click", () => setVista("fre"));
+function freHtml(){
+  const pend = DATA.filter(r => seg(r.a).fre === "pendiente" && (!ui.lab || r.l === ui.lab) &&
+      (!ui.q || (r.a + " " + r.o + " " + r.e + " " + r.d + " " + r.n).toLowerCase().includes(ui.q)))
+    .sort((x, y) => (nivel(x.a) ?? 9) - (nivel(y.a) ?? 9) || x.c.localeCompare(y.c));
+  const hechos = DATA.filter(r => seg(r.a).fre === "hecho");
+  const card = (r, i) => { const l = nivel(r.a), s = seg(r.a); return `<div class="fcard ${l ? "lv" + l : ""}">
+    <div class="fnum ${l ? "l" + l : ""}">${i + 1}</div>
+    <div class="fbody"><div class="t">${esc(r.d)}</div>
+      <div class="ids"><span>Aviso <b class="num">${r.a}</b></span>${r.o ? `<span>Orden <b class="num">${r.o}</b></span>` : ""}${r.e ? `<span>Equipo <b class="num">${r.e}</b></span>` : ""}</div>
+      <div class="ids"><span>Responsable: <b>${esc(r.n || "—")}</b></span>${s.mec ? `<span>Mecánico: <b>${esc(s.mec)}</b></span>` : ""}${l ? `<span class="pill lv"><span class="u u${l}">${NIV[l][0]}</span>Urgencia ${NIV[l]}</span>` : ""}<span>${dias(r.c)} días abierto</span></div>
+    </div>
+    <button class="btn ok fdone" type="button" data-fa="${r.a}" data-fv="hecho">✓ Hecho</button></div>`; };
+  return `<section class="fq"><div class="fqh"><h2>Cola de la Fresadora CNC</h2><span class="meta">${pend.length} pendientes · primero los urgentes, luego los más antiguos</span></div>
+    ${pend.length ? pend.map(card).join("") : `<div class="empty">No hay trabajos pendientes en la fresadora.</div>`}
+    ${hechos.length ? `<details class="fhechos"><summary>Ya hechos (${hechos.length})</summary>${hechos.slice(0, 40).map(r => `<div class="fh"><span>${esc(r.d)} · Aviso ${r.a}</span><button class="btn" type="button" data-fa="${r.a}" data-fv="pendiente">Regresar a la cola</button></div>`).join("")}</details>` : ""}</section>`;
+}
+function setFre(a, v){
+  const m = new Map(segs); m.set(a, { ...seg(a), fre: v }); segs = m; render();
+  commit("fresadora/" + a, { fre: v }, v === "hecho" ? "Marcado como hecho en la fresadora" : "Regresado a la cola de la fresadora");
+}
+document.getElementById("list").addEventListener("click", e => { const fb = e.target.closest("button[data-fa]"); if (fb) setFre(fb.dataset.fa, fb.dataset.fv); });
+
+
+function dias(f){ return Math.max(0, Math.floor((Date.now() - new Date(f + "T00:00:00")) / 86400000)); }
+function fmtFecha(s){ const [y,m,d] = s.split("-"); return `${d}/${m}/${y.slice(2)}`; }
+let GROUPS = new Map(); DATA.forEach(r => { const n = r.n || ""; if (!GROUPS.has(n)) GROUPS.set(n, []); GROUPS.get(n).push(r); });
+function rebuildData(list){ DATA = list; NAMES = [...new Set(DATA.map(r => r.n).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es")); FICHA = {}; DATA.forEach(r => { if (r.n && r.f) FICHA[r.n] = r.f; }); ALLKEYS = [...NAMES, NONE]; GROUPS = new Map(); DATA.forEach(r => { const n = r.n || ""; if (!GROUPS.has(n)) GROUPS.set(n, []); GROUPS.get(n).push(r); }); }
+
+function nivel(a){ const p = props.get(a); return p ? p.orden : null; }
+function seg(a){ return segs.get(a) || {}; }
+function plan(n){
+  const all = GROUPS.get(n) || [];
+  const ordered = all.slice().sort((x,y) => {
+    const fx = seg(x.a).est === "finalizado" ? 1 : 0, fy = seg(y.a).est === "finalizado" ? 1 : 0;
+    const lx = nivel(x.a) ?? 9, ly = nivel(y.a) ?? 9;
+    const tx = props.get(x.a)?.at || 0, ty = props.get(y.a)?.at || 0;
+    return fx - fy || lx - ly || (lx < 9 ? tx - ty : 0) || x.c.localeCompare(y.c) || x.a.localeCompare(y.a);
+  });
+  const pos = new Map(); ordered.forEach((r,i) => pos.set(r.a, i + 1));
+  return { all, ordered, pos };
+}
+
+/* ---------- responsable desplegable (varios) ---------- */
+function respCounts(){ const c = {}; DATA.forEach(r => { if (ui.lab && r.l !== ui.lab) return; const k = key(r.n); c[k] = (c[k]||0) + 1; }); return c; }
+function ddText(){ const s = [...selResp]; $("#ddTxt").textContent = s.length === 0 ? "Todos" : s.length === 1 ? (s[0] === NONE ? "Sin responsable" : s[0]) : `${s.length} responsables seleccionados`; }
+function renderDD(){
+  const c = respCounts();
+  $("#ddList").innerHTML = ALLKEYS.map(k => {
+    const label = k === NONE ? "Sin responsable" : k;
+    return `<label class="dd-item${c[k] ? "" : " zero"}"><input type="checkbox" value="${esc(k)}"${selResp.has(k) ? " checked" : ""}><span class="nm">${esc(label)}</span><span class="c">${c[k]||0}</span></label>`;
+  }).join("");
+  ddText();
+}
+function openDD(on){ $("#ddPanel").hidden = !on; $("#ddBtn").setAttribute("aria-expanded", String(on)); if (on) renderDD(); }
+$("#ddBtn").addEventListener("click", e => { e.stopPropagation(); openDD($("#ddPanel").hidden); });
+document.addEventListener("click", e => { if (!e.target.closest(".field.resp")) openDD(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") openDD(false); });
+$("#ddList").addEventListener("change", e => {
+  const k = e.target.value; e.target.checked ? selResp.add(k) : selResp.delete(k);
+  if (e.target.checked) openSet.add(k);
+  saveSel(); render(); renderDD();
+});
+$("#ddAll").addEventListener("click", () => { selResp = new Set(ALLKEYS); saveSel(); render(); renderDD(); });
+$("#ddNone").addEventListener("click", () => { selResp.clear(); saveSel(); render(); renderDD(); });
+function saveSel(){ store.set("prio.resp2", JSON.stringify([...selResp])); saveOpen(); }
+
+function renderMecFilter(){
+  const c = {}; DATA.forEach(r => { const m = seg(r.a).mec || ""; c[m] = (c[m]||0) + 1; });
+  const sel = $("#fmec");
+  sel.innerHTML = `<option value="">Todos</option>` + MECANICOS.map(m => `<option value="${esc(m)}">${esc(m)} (${c[m]||0})</option>`).join("") + `<option value="__sin">Sin asignar (${c[""]||0})</option>`;
+  sel.value = [...sel.options].some(o => o.value === ui.mec) ? ui.mec : "";
+}
+$("#fmec").addEventListener("change", e => { ui.mec = e.target.value; store.set("prio.mec", ui.mec); render(); });
+
+document.querySelectorAll("#lab button").forEach(b => {
+  b.setAttribute("aria-pressed", String(b.dataset.v === ui.lab));
+  b.addEventListener("click", () => { ui.lab = b.dataset.v; store.set("prio.lab", ui.lab);
+    document.querySelectorAll("#lab button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); render(); });
+});
+$("#estado").addEventListener("change", e => { ui.estado = e.target.value; render(); });
+$("#q").addEventListener("input", e => { ui.q = e.target.value.trim().toLowerCase(); render(); });
+document.querySelectorAll(".kpi").forEach(k => k.addEventListener("click", () => { ui.estado = k.dataset.k; $("#estado").value = ui.estado; render(); }));
+function saveOpen(){ store.set("prio.open", JSON.stringify([...openSet])); }
+$("#expAll").addEventListener("click", () => { document.querySelectorAll("details.group").forEach(d => { d.open = true; openSet.add(d.dataset.k); }); saveOpen(); });
+$("#colAll").addEventListener("click", () => { document.querySelectorAll("details.group").forEach(d => { d.open = false; openSet.delete(d.dataset.k); }); saveOpen(); });
+$("#list").addEventListener("toggle", e => { const d = e.target; if (!d.matches || !d.matches("details.group")) return; d.open ? openSet.add(d.dataset.k) : openSet.delete(d.dataset.k); saveOpen(); }, true);
+
+/* ---------- render ---------- */
+let pendingRender = false;
+function schedule(){ const a = document.activeElement; if (a && a.closest && a.closest("#list") && a.matches("input,select")) { pendingRender = true; return; } render(); }
+document.addEventListener("focusout", () => setTimeout(() => { if (pendingRender) { pendingRender = false; schedule(); } }, 0));
+
+function rowVisible(r){
+  const s = seg(r.a);
+  if (ui.lab && r.l !== ui.lab) return false;
+  if (ui.mec === "__sin" ? s.mec : (ui.mec && s.mec !== ui.mec)) return false;
+  if (ui.q){ const h = (r.a+" "+r.o+" "+r.e+" "+r.d+" "+(s.mec||"")+" "+(s.mot||"")).toLowerCase(); if (!h.includes(ui.q)) return false; }
+  switch (ui.estado){
+    case "urg": return nivel(r.a) != null;
+    case "sinmec": return !s.mec;
+    case "sinest": return !s.est;
+    case "frep": return s.fre === "pendiente";
+    case "freh": return s.fre === "hecho";
+    case "pendiente": case "proceso": case "finalizado": return s.est === ui.estado;
+  }
+  return true;
+}
+
+function render(){
+  let kAll = 0, kUrg = 0, kSinMec = 0, kProc = 0, kFin = 0, kCola = 0, kMat = 0;
+  const blocks = [];
+  [...NAMES, ""].forEach(n => {
+    if (!GROUPS.has(n)) return;
+    if (selResp.size && !selResp.has(key(n))) return;
+    const pl = plan(n);
+    const hasUrg = pl.all.some(r => nivel(r.a) != null);
+    pl.all.forEach(r => { if (ui.lab && r.l !== ui.lab) return; const s = seg(r.a);
+      if (s.est === "finalizado") { kFin++; return; }
+      kAll++; if (nivel(r.a) != null) kUrg++; if (!s.mec) kSinMec++; if (s.est === "proceso") kProc++; if (!s.est) kCola++; if (s.est === "pendiente") kMat++; });
+    if (ui.estado === "sinurg" && (hasUrg || !n)) return;
+    const visible = pl.ordered.filter(rowVisible);
+    if (!visible.length) return;
+    blocks.push(groupHtml(n, pl, visible));
+  });
+  $("#k-all").textContent = kAll; $("#k-urg").textContent = kUrg; $("#k-sinmec").textContent = kSinMec; $("#k-proc").textContent = kProc; $("#k-fin").textContent = kFin; $("#k-cola").textContent = kCola; $("#k-mat").textContent = kMat;
+  document.querySelectorAll(".kpi").forEach(k => k.setAttribute("aria-pressed", String(k.dataset.k === ui.estado)));
+  document.getElementById("freCnt").textContent = DATA.filter(r => seg(r.a).fre === "pendiente").length;
+  document.getElementById("vResp").setAttribute("aria-pressed", String(ui.vista !== "fre"));
+  document.getElementById("vFre").setAttribute("aria-pressed", String(ui.vista === "fre"));
+  document.getElementById("mecsBody").innerHTML = mecsHtml();
+  document.getElementById("vSol").setAttribute("aria-pressed", String(ui.vista === "sol"));
+  document.getElementById("sol").hidden = ui.vista !== "sol"; $("#list").hidden = ui.vista === "sol";
+  if (ui.vista === "sol") { renderMecFilter(); if (!$("#ddPanel").hidden) renderDD(); else ddText(); return; }
+  if (ui.vista === "fre") { $("#list").innerHTML = freHtml(); renderMecFilter(); if (!$("#ddPanel").hidden) renderDD(); else ddText(); return; }
+  $("#list").innerHTML = blocks.length ? blocks.join("") : (DATA.length ? `<div class="empty">No hay avisos con estos filtros.</div>` : `<div class="empty">Cargando avisos de la hoja de Google…</div>`);
+  renderMecFilter();
+  if (!$("#ddPanel").hidden) renderDD(); else ddText();
+}
+
+function groupHtml(n, pl, visible){
+  const k = key(n);
+  const labs = { CNC:0, TORNOS:0 }; pl.all.forEach(r => labs[r.l]++);
+  const lv = {1:0,2:0,3:0}; pl.all.forEach(r => { const l = nivel(r.a); if (l && seg(r.a).est !== "finalizado") lv[l]++; });
+  const es = { pendiente:0, proceso:0, finalizado:0 }; let sinMec = 0;
+  pl.all.forEach(r => { const s = seg(r.a); if (es[s.est] != null) es[s.est]++; if (!s.mec && s.est !== "finalizado") sinMec++; });
+  const levels = (lv[1]||lv[2]||lv[3])
+    ? [1,2,3].filter(l => lv[l]).map(l => `<span class="pill lv"><span class="u u${l}">${NIV[l][0]}</span>${lv[l]} ${NIV[l].toLowerCase()}</span>`).join("")
+    : `<span class="pill none">Sin urgentes elegidos</span>`;
+  let prev = null;
+  const rows = visible.map((r, i) => { const l = nivel(r.a); const sep = i > 0 && prev != null && l == null; prev = l; return rowHtml(r, pl, n, sep); }).join("");
+  return `<details class="group" data-k="${esc(k)}"${openSet.has(k) ? " open" : ""}>
+    <summary>
+      <span class="caret" aria-hidden="true">▶</span>
+      <div class="gname"><h2>${n ? esc(n) : "Sin responsable asignado"}</h2></div>
+      <div class="meta">
+        ${levels}
+        ${es.finalizado ? `<span class="pill finalizado">${es.finalizado} finalizados</span>` : ""}
+        ${es.proceso ? `<span class="pill proceso">${es.proceso} en proceso</span>` : ""}
+        ${es.pendiente ? `<span class="pill pendiente">${es.pendiente} necesitan material</span>` : ""}
+        ${sinMec ? `<span class="pill sinest">${sinMec} sin mecánico</span>` : ""}
+        ${n && FICHA[n] ? `<span>Ficha <span class="num">${esc(FICHA[n])}</span></span>` : ""}
+        <span class="num">${pl.all.length} avisos</span>
+        ${labs.CNC ? `<span class="pill lab">CNC ${labs.CNC}</span>` : ""}${labs.TORNOS ? `<span class="pill lab">Tornos ${labs.TORNOS}</span>` : ""}
+      </div>
+    </summary>
+    <div class="rows">${rows}</div>
+  </details>`;
+}
+
+function optsHtml(a, cur, enabled){
+  return `<div class="opts" role="group">${[1,2,3].map(v =>
+    `<button type="button" class="prop lvbtn" data-a="${a}" data-v="${v}" aria-pressed="${cur === v}" ${enabled ? "" : "disabled"} aria-label="Urgencia ${NIV[v]} para aviso ${a}">${NIV[v]}</button>`).join("")}</div>`;
+}
+
+function workHtml(r){
+  const s = seg(r.a);
+  if (canAssign){
+    return `<div class="work">
+      <span class="wl">Mecánico</span>
+      <select class="mec${s.mec ? "" : " none"}" id="m-${r.a}" data-a="${r.a}" aria-label="Mecánico para aviso ${r.a}">
+        <option value="">Sin asignar</option>
+        ${MECANICOS.map(m => `<option value="${esc(m)}"${m === s.mec ? " selected" : ""}>${esc(m)}</option>`).join("")}
+        ${s.mec && !MECANICOS.includes(s.mec) ? `<option value="${esc(s.mec)}" selected>${esc(s.mec)}</option>` : ""}
+      </select>
+      <span class="wl">Estado</span>
+      <div class="est" role="group"><button type="button" data-a="${r.a}" data-v="cola" aria-pressed="${!s.est}">En cola</button>${Object.keys(EST).map(v => { const no = puedeEstado(r.a, v); return `<button type="button" data-a="${r.a}" data-v="${v}" aria-pressed="${s.est === v}"${no ? ` class="lock" title="${no}"` : ""}>${EST[v]}</button>`; }).join("")}</div>
+      ${s.est === "pendiente" ? `<input class="mot" id="t-${r.a}" data-a="${r.a}" list="motivos" maxlength="160" placeholder="¿Qué material necesita?" value="${esc(s.mot || "")}" aria-label="Motivo pendiente aviso ${r.a}">` : ""}
+      ${s.est === "finalizado" ? `<span class="brk"></span><div style="flex-basis:100%">${cierreHtml(r)}</div>` : ""}
+      <span class="brk"></span><div class="frerow"><span class="wl">Fresadora CNC (Christian)</span>
+      <div class="fre" role="group">${Object.keys(FRE).map(v => `<button type="button" data-a="${r.a}" data-v="${v}" aria-pressed="${s.fre === v}">${FRE[v]}</button>`).join("")}</div></div>
+    </div>`;
+  }
+  return `<div class="work wread">
+    <span class="wl">Mecánico</span> ${s.mec ? `<b>${esc(s.mec)}</b>` : `<span class="pill sinest">Sin asignar</span>`}
+    ${s.est ? `<span class="pill ${s.est}">${EST[s.est]}</span>` : `<span class="pill cola">En cola</span>`}
+    ${s.est === "pendiente" && s.mot ? `<span class="mot-read">${esc(s.mot)}</span>` : ""}
+    ${s.fre ? `<span class="pill ${s.fre === "hecho" ? "fre-h" : "fre-p"}">Fresadora CNC: ${FRE[s.fre]}</span>` : ""}
+  </div>`;
+}
+
+function rowHtml(r, pl, n, sep){
+  const l = nivel(r.a), p = props.get(r.a), s = seg(r.a);
+  const d = dias(r.c), pos = pl.pos.get(r.a);
+  return `<div class="row ${l ? "lv" + l : ""}${s.est === "finalizado" ? " fin-row" : ""}${sep ? " sep" : ""}">
+    <div class="pos" title="Posición en la cola">${s.est === "finalizado" ? `<span class="n fin">✓</span>` : l ? `<span class="n l${l}">${pos}</span>` : `<span class="n rest">${pos}</span>`}</div>
+    <div class="slot"><small>Urgencia · Responsable</small>${optsHtml(r.a, p ? p.orden : null, canWrite && !!n)}</div>
+    <div class="desc">
+      <div class="t">${esc(r.d)}</div>
+      <div class="ids">
+        <span>Aviso <b class="num">${r.a}</b></span>
+        ${r.o ? `<span>Orden <b class="num">${r.o}</b></span>` : `<span>Sin orden SAP</span>`}
+        ${r.e ? `<span>Equipo <b class="num">${r.e}</b></span>` : ""}
+      </div>
+      ${r.t ? `<div class="circ"><span>Circunst.txt</span>${esc(r.t)}</div>` : ""}
+      ${workHtml(r)}
+      ${fechasHtml(r)}
+    </div>
+    <div class="when">
+      <span class="pill lab">${r.l === "CNC" ? "CNC" : "Tornos"}</span>
+      <span>Creado <span class="d">${fmtFecha(r.c)}</span></span>
+      <span><span class="age${d > 45 ? " old" : ""}">${d}</span> días abierto</span>
+    </div>
+  </div>`;
+}
+
+/* ---------- escritura ---------- */
+let tt; function toast(m){ const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(tt); tt = setTimeout(() => t.classList.remove("on"), 1800); }
+function fail(e){
+  if (e && e.code === "invalid_argument") toast("No tienes permiso para guardar este cambio.");
+  else if (e && e.code === "quota_exceeded") toast("El registro está lleno. Avisa al Supervisor.");
+  else toast("No se pudo guardar. Intenta de nuevo.");
+}
+const chain = new Map();
+let commit = function(path, body, msg){
+  if (!db) { toast("Sin conexión: el cambio no se guardó."); return; }
+  const prev = chain.get(path) || Promise.resolve();
+  const next = prev.then(async () => { try { body ? await db.doc(path).set(body) : await db.doc(path).delete(); toast(msg); } catch(e){ fail(e); } });
+  chain.set(path, next);
+}
+function setProp(a, v){
+  const nv = props.get(a)?.orden === v ? null : v;
+  const body = nv == null ? null : { orden: nv, by: uid, at: Date.now() };
+  const m = new Map(props); body ? m.set(a, body) : m.delete(a); props = m; render();
+  commit("propuestas/" + a, body, nv == null ? "Urgencia quitada" : `Urgencia ${NIV[nv]} marcada`);
+}
+function setSeg(a, patch, msg){
+  const cur = { ...seg(a), ...patch, by: uid, at: Date.now() };
+  if (cur.est !== "pendiente") delete cur.mot;
+  Object.keys(cur).forEach(k => { if (cur[k] === "" || cur[k] == null) delete cur[k]; });
+  const empty = !cur.mec && !cur.est && !cur.fre;
+  const m = new Map(segs); empty ? m.delete(a) : m.set(a, cur); segs = m;
+  commit("seguimiento/" + a, empty ? null : cur, msg);
+}
+$("#list").addEventListener("click", e => {
+  const b = e.target.closest("button[data-a]"); if (!b) return; const a = b.dataset.a;
+  if (b.classList.contains("prop")) return setProp(a, +b.dataset.v);
+  if (b.closest(".fre")) { const v = b.dataset.v; const nv = seg(a).fre === v ? "" : v;
+    setSeg(a, { fre: nv }, nv ? `Fresadora CNC: ${FRE[nv]}` : "Fresadora quitada"); render(); return; }
+  if (b.closest(".est")) { const v = b.dataset.v === "cola" ? "" : b.dataset.v; const nv = (v && seg(a).est !== v) ? v : "";
+    const no = nv ? puedeEstado(a, nv) : ""; if (no) { toast(no); return; }
+    setSeg(a, { est: nv }, nv ? `Marcado: ${EST[nv]}` : "Marcado: En cola"); render();
+    if (nv === "pendiente") setTimeout(() => { const i = document.getElementById("t-" + a); if (i) i.focus(); }, 0); }
+});
+$("#list").addEventListener("change", e => {
+  const t = e.target, a = t.dataset.a; if (!a) return;
+  if (t.classList.contains("mec")) { const ps = !t.value && ["proceso", "finalizado"].includes(seg(a).est) ? { est: "" } : {}; setSeg(a, { mec: t.value, ...ps }, t.value ? "Mecánico asignado" : (ps.est === "" ? "Mecánico quitado: regresa a En cola" : "Mecánico quitado")); render(); }
+  if (t.classList.contains("mot")) { const v = t.value.trim().slice(0,160); if (v !== (seg(a).mot || "")) setSeg(a, { mot: v }, "Motivo guardado"); }
+});
+
+/* ---------- Excel ---------- */
+const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+function buildExcel(){
+  const rows = [];
+  [...NAMES, ""].forEach(n => {
+    if (!GROUPS.has(n)) return;
+    if (selResp.size && !selResp.has(key(n))) return;
+    if (ui.estado === "sinurg" && (!n || GROUPS.get(n).some(r => nivel(r.a) != null))) return;
+    const pl = plan(n);
+    pl.ordered.filter(rowVisible).forEach(r => { const s = seg(r.a);
+      rows.push({ "Responsable": n || "Sin responsable", "Posición": pl.pos.get(r.a), "Urgencia": nivel(r.a) || "",
+        "Aviso": +r.a, "Orden": r.o ? +r.o : "", "Equipo": r.e ? +r.e : "", "Laboratorio": r.l === "CNC" ? "CNC" : "Tornos",
+        "Descripción": r.d, "Proceso": r.p, "Fecha creación": r.c.split("-").reverse().join("/"), "Días abierto": dias(r.c),
+        "Mecánico": s.mec || "Sin asignar", "Estado": s.est ? EST[s.est] : "Sin estado", "Motivo pendiente": s.mot || "" }); });
+  });
+  if (!rows.length) return null;
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [34,9,9,11,11,11,11,48,20,13,11,38,12,34].map(w => ({ wch: w }));
+  ws["!autofilter"] = { ref: ws["!ref"] };
+  const res = [...MECANICOS, "Sin asignar"].map(m => {
+    const mine = rows.filter(r => r["Mecánico"] === m);
+    const c = e => mine.filter(r => r["Estado"] === e).length;
+    return { "Mecánico": m, "Total": mine.length, "Urgentes": mine.filter(r => r["Urgencia"] !== "").length,
+      "Pendiente": c("Pendiente"), "En proceso": c("En proceso"), "Finalizado": c("Finalizado"), "Sin estado": c("Sin estado") };
+  });
+  const ws2 = XLSX.utils.json_to_sheet(res);
+  ws2["!cols"] = [40,8,10,11,11,11,11].map(w => ({ wch: w }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Avisos");
+  XLSX.utils.book_append_sheet(wb, ws2, "Por mecánico");
+  return XLSX.write(wb, { type: "array", bookType: "xlsx" });
+}
+async function exportarExcel(share){
+  if (!window.XLSX) { toast("No se pudo cargar el generador de Excel. Revisa tu conexión."); return; }
+  const buf = buildExcel();
+  if (!buf) { toast("No hay avisos para exportar con estos filtros."); return; }
+  const d = new Date(), f = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  const fname = `Prioridades_CNC_Tornos_${f}.xlsx`;
+  if (dl) {
+    try { await dl.save({ filename: fname, data: new Blob([buf]) }); toast("Excel descargado"); }
+    catch(e){ if (!e || e.code !== "declined") toast("No se pudo descargar el Excel."); }
+    return;
+  }
+  const file = new File([buf], fname, { type: XLSX_MIME });
+  const texto = "Prioridades CNC y Tornos - " + f;
+  if (share) {
+    let ok = false;
+    try { ok = !!(navigator.canShare && navigator.canShare({ files: [file] })); } catch(e){}
+    if (ok) {
+      try { await navigator.share({ files: [file], title: fname, text: texto }); return; }
+      catch(e){ if (e && e.name === "AbortError") return; }
+    }
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = fname;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  if (share) {
+    toast("Excel descargado. En WhatsApp adjúntalo desde Descargas.");
+    setTimeout(() => { const u = "https://wa.me/?text=" + encodeURIComponent(texto + " (adjunto el Excel)"); if (!window.open(u, "_blank")) window.location.href = u; }, 1500);
+    return;
+  }
+  toast("Excel descargado");
+}
+
+
+
+
+/* ---------- Agregar aviso desde captura de SAP (la imagen no se guarda) ---------- */
+let guardarNuevoRemoto = null;
+(function(){
+  const cap = document.getElementById("cap"), msg = document.getElementById("capMsg"), form = document.getElementById("capForm");
+  const bar = document.getElementById("capBar"), file = document.getElementById("capFile");
+  const q = id => document.getElementById(id);
+  const aviso_ = t => { cap.hidden = !t; if (t) { form.hidden = true; msg.textContent = ""; msg.className = "capmsg"; cap.scrollIntoView({ behavior: "smooth", block: "start" }); } };
+  document.getElementById("vAdd").addEventListener("click", () => aviso_(cap.hidden));
+  q("capX").addEventListener("click", () => aviso_(false));
+  q("capCancel").addEventListener("click", () => aviso_(false));
+  const decir = (t, err) => { msg.textContent = t; msg.className = "capmsg" + (err ? " err" : ""); };
+  const cargarOCR = () => new Promise((ok, no) => {
+    if (window.Tesseract) return ok();
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+    s.onload = ok; s.onerror = () => no(new Error("No se pudo cargar el lector de imágenes. Revisa el internet."));
+    document.head.appendChild(s);
+  });
+  const preparar = async f => {
+    const url = URL.createObjectURL(f);
+    try {
+      const img = new Image();
+      await new Promise((ok, no) => { img.onload = ok; img.onerror = () => no(new Error("No se pudo abrir la imagen")); img.src = url; });
+      const k = Math.max(1, Math.min(3, 2400 / img.width));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(img, 0, 0, c.width, c.height);
+      const d = g.getImageData(0, 0, c.width, c.height), p = d.data;
+      for (let i = 0; i < p.length; i += 4) { let y = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]; y = Math.max(0, Math.min(255, (y - 128) * 1.35 + 140)); p[i] = p[i + 1] = p[i + 2] = y; }
+      g.putImageData(d, 0, 0);
+      return c;
+    } finally { URL.revokeObjectURL(url); }
+  };
+  const norm = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z ]/g, " ").replace(/\s+/g, " ").trim();
+  const buscarPersona = (ficha, nombre) => {
+    if (ficha) { const n = Object.keys(FICHA).find(k => String(FICHA[k]) === String(ficha)); if (n) return n; }
+    const w = norm(nombre).split(" ").filter(x => x.length > 2);
+    if (!w.length) return "";
+    const pts = NAMES.map(n => { const nw = norm(n).split(" "); return [n, w.filter(x => nw.some(y => y === x || (x.length > 3 && y.slice(0, 4) === x.slice(0, 4)))).length]; })
+      .sort((a, b) => b[1] - a[1]);
+    if (!pts.length || !pts[0][1]) return "";
+    if (pts[0][1] >= 2 || (pts[1] ? pts[1][1] < pts[0][1] : true)) return pts[0][0];
+    return "";
+  };
+  const leer = t => {
+    const T = t.replace(/[|\[\]{}]/g, " ").replace(/[“”]/g, '"');
+    const L = T.split(/\n/).map(x => x.replace(/\s+/g, " ").trim()).filter(Boolean);
+    const m = re => { const r = T.match(re); return r ? r[1].trim() : ""; };
+    const out = {};
+    out.e = m(/Equipo\s*[:.]?\s*(\d{7,8})/i);
+    out.o = m(/\bOrden\s*[:.]?\s*(\d{8})/i);
+    out.a = m(/Notificaci[oó]n\D{0,20}(1\d{7})/i) || m(/Aviso\s*[:.]?\s*(1\d{7})/i);
+    if (!out.a) { const todos = (T.match(/\b1[01]\d{6}\b/g) || []).filter(x => x !== out.e && x !== out.o); out.a = todos[0] || ""; }
+    let d = m(/Descrip\S*\s+(PSAM.+)/i) || m(/(PSAM-(?:TOR|CNC)[^\n]*)/i);
+    if (!d) { const la = L.find(x => out.a && x.includes(out.a) && /PSAM/i.test(x)); if (la) d = la.slice(la.search(/PSAM/i)); }
+    if (!d) d = m(/Descripci[oó]n\s*:\s*(.+)/i);
+    out.d = d.replace(/\s+[A-Za-z]$/, "").replace(/\s+/g, " ").trim().slice(0, 120);
+    out.s = m(/Estado\s+notif\.?\s*([A-Z]{4}(?:\s+[A-Z]{4})*)/i);
+    const f = m(/Fe\.?\s*notif\.?\D{0,6}(\d{2}[.\/-]\d{2}[.\/-]\d{4})/i) || m(/(\d{2}[.\/]\d{2}[.\/]20\d{2})/);
+    if (f) { const [dd, mm, yy] = f.split(/[.\/-]/); out.c = `${yy}-${mm}-${dd}`; }
+    const le = L.find(x => /Emplead/i.test(x));
+    if (le) { const r = le.match(/(\d{5,6})\s+(.+)$/);
+      if (r) { out.f = r[1]; out.nraw = r[2]; } else out.nraw = le.replace(/^.*?Emplead\S*\s+respons\S*/i, "").replace(/^[^A-ZÁÉÍÓÚÑ]+/i, "");
+      out.nraw = (out.nraw || "").split(/\s[—–-]\s|\.\.|\s{2,}/)[0].trim(); }
+    if (!out.nraw) out.nraw = m(/Solicitante\s*:\s*(.+)/i);
+    out.n = buscarPersona(out.f, out.nraw);
+    if (out.n && FICHA[out.n]) out.f = String(FICHA[out.n]);
+    let i1 = -1; L.forEach((x, i) => { if (/C[il1]r\w*nst/i.test(x)) i1 = i; });
+    const i2 = L.findIndex((x, i) => i > i1 && /^Func|Interlocut/i.test(x));
+    if (i1 >= 0) out.t = L.slice(i1 + 1, i2 > i1 ? i2 : i1 + 8).filter(x => !/UTC|\(\d{6}\)/.test(x) && x.replace(/[^a-záéíóúñ]/gi, "").length > 5)
+      .join(" ").replace(/\s+[^\s\w"']+(\s|$)/g, " ").replace(/\s+/g, " ").trim().slice(0, 500);
+    if (!out.t) out.t = m(/Descripcion\s*:\s*(.+)/i);
+    const dz = (out.d || "").toUpperCase();
+    out.l = /CNC/.test(dz) ? "CNC" : /TOR/.test(dz) ? "TORNOS" : "";
+    return out;
+  };
+  const llenar = x => {
+    const sel = q("cN");
+    sel.innerHTML = `<option value="">Elegir…</option>` + NAMES.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("") +
+      (x.nraw && !x.n ? `<option value="${esc(x.nraw)}">${esc(x.nraw)} (nuevo)</option>` : "");
+    q("cA").value = x.a || ""; q("cD").value = x.d || ""; q("cE").value = x.e || ""; q("cO").value = x.o || "";
+    q("cL").value = x.l || ""; sel.value = x.n || (x.nraw || ""); q("cF").value = x.f || ""; q("cC").value = x.c || "";
+    q("cS").value = x.s || ""; q("cT").value = x.t || "";
+    ["cA", "cD", "cL", "cN"].forEach(id => q(id).classList.toggle("dudoso", !q(id).value));
+    form.hidden = false;
+  };
+  file.addEventListener("change", async () => {
+    const f = file.files && file.files[0]; if (!f) return;
+    form.hidden = true; bar.hidden = false; bar.firstElementChild.style.width = "5%";
+    try {
+      decir("Preparando el lector (la primera vez tarda unos segundos)…");
+      await cargarOCR();
+      const lienzo = await preparar(f);
+      file.value = "";                                   // la imagen se suelta: no se guarda
+      decir("Leyendo la captura…");
+      const w = await Tesseract.createWorker("spa", 1, { logger: e => { if (e.status === "recognizing text") bar.firstElementChild.style.width = Math.round(10 + e.progress * 90) + "%"; } });
+      await w.setParameters({ tessedit_pageseg_mode: "4" });
+      const r = await w.recognize(lienzo);
+      await w.terminate();
+      lienzo.width = lienzo.height = 0;
+      const x = leer(r.data.text || "");
+      if (x.a && DATA.some(z => z.a === x.a)) { decir("El aviso " + x.a + " ya está en la lista. No hace falta agregarlo.", true); bar.hidden = true; return; }
+      llenar(x);
+      decir(x.a ? "Revisa los datos. Los campos en naranja no se pudieron leer: complétalos." : "No pude leer el número de aviso. Escríbelo tú y revisa lo demás.", !x.a);
+    } catch (e) { decir((e && e.message) || "No se pudo leer la imagen.", true); llenar({}); }
+    finally { bar.hidden = true; file.value = ""; }
+  });
+  q("cN").addEventListener("change", () => { const n = q("cN").value; if (FICHA[n]) q("cF").value = FICHA[n]; });
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const a = q("cA").value.replace(/\D/g, "");
+    if (a.length !== 8) { decir("El aviso debe tener 8 números.", true); return; }
+    if (DATA.some(z => z.a === a)) { decir("El aviso " + a + " ya está en la lista.", true); return; }
+    if (!q("cL").value) { decir("Elige el laboratorio.", true); return; }
+    if (!guardarNuevoRemoto) { decir("Sin conexión con la hoja de Google. No se guardó.", true); return; }
+    const n = q("cN").value, prev = DATA.find(z => z.n === n);
+    const datos = { aviso: a, descripcion: q("cD").value.trim(), equipo: q("cE").value.trim(), orden: q("cO").value.trim(),
+      laboratorio: q("cL").value, responsable: n, ficha: q("cF").value.trim(), proceso: prev ? prev.p : "",
+      fecha: q("cC").value, status2: q("cS").value.trim(), detalle: q("cT").value.trim() };
+    q("capSave").disabled = true; decir("Guardando…");
+    try {
+      const res = await guardarNuevoRemoto(datos);
+      if (res && res.ok) { toast("Aviso " + a + " agregado"); aviso_(false); }
+      else decir("No se guardó: " + ((res && res.error) || "error desconocido"), true);
+    } catch (err) { decir("No se guardó: " + ((err && err.message) || "sin conexión"), true); }
+    finally { q("capSave").disabled = false; }
+  });
+})();
+
+
+function fmtDT(v){ if (!v) return ""; const d = new Date(v); if (isNaN(d)) return ""; return d.toLocaleDateString("es-GT", { day: "2-digit", month: "2-digit" }) + " " + d.toLocaleTimeString("es-GT", { hour: "2-digit", minute: "2-digit" }); }
+function durTxt(a, b){ const ms = (b ? new Date(b) : new Date()) - new Date(a); if (!(ms >= 0)) return ""; const h = ms / 3600000; return h < 24 ? Math.max(1, Math.round(h)) + " h" : (Math.round(h / 24 * 10) / 10) + " días"; }
+function fechasHtml(r){
+  const s = seg(r.a); let h = "";
+  if (s.est === "pendiente") h += `<div class="matbox"><b>⚠ Detenido · necesita material</b><span class="que">${esc(s.mot || "Falta indicar qué material")}</span>${s.fm ? `<span>desde ${fmtDT(s.fm)}</span><span class="dias">${durTxt(s.fm)}</span>` : ""}</div>`;
+  if (s.fa) h += `<div class="fechas"><span>Inicio (asignado): <b>${fmtDT(s.fa)}</b></span><span>→</span><span>${s.ff ? `Fin (finalizado): <b>${fmtDT(s.ff)}</b>` : "Fin: <b>sin finalizar</b>"}</span><span class="dur${s.ff ? "" : " run"}">${durTxt(s.fa, s.ff)}${s.ff ? " de trabajo" : " transcurridos"}</span></div>`;
+  return h;
+}
+
+
+const NIV = { 1: "Alta", 2: "Media", 3: "Baja" };
+const fotos = new Map();     // fotos de cierre: solo en memoria, no se guardan
+function puedeEstado(a, v){
+  const s = seg(a);
+  if ((v === "proceso" || v === "finalizado") && !s.mec) return "Primero asigna un mecánico.";
+  if (v === "finalizado" && s.est !== "proceso" && s.est !== "finalizado") return "Primero márcalo En proceso.";
+  return "";
+}
+function mecsHtml(){
+  const by = new Map(); MECANICOS.forEach(m => by.set(m, []));
+  DATA.forEach(r => { const s = seg(r.a); if (!s.mec || s.est === "finalizado") return; if (ui.lab && r.l !== ui.lab) return; if (!by.has(s.mec)) by.set(s.mec, []); by.get(s.mec).push(r); });
+  const ord = { proceso: 0, "": 1, pendiente: 2 };
+  const con = [...by.entries()].filter(([, l]) => l.length).sort((a, b) => b[1].length - a[1].length);
+  const sin = [...by.entries()].filter(([, l]) => !l.length).map(([m]) => m);
+  document.getElementById("mecsN").textContent = con.length + " con trabajo";
+  const card = ([m, l]) => {
+    l.sort((x, y) => (ord[seg(x.a).est || ""] - ord[seg(y.a).est || ""]) || ((nivel(x.a) ?? 9) - (nivel(y.a) ?? 9)) || x.c.localeCompare(y.c));
+    const c = k => l.filter(r => (seg(r.a).est || "") === k).length;
+    return `<div class="mcard"><h3>${esc(m)}</h3><div class="chips">
+      ${c("proceso") ? `<span class="pill proceso">${c("proceso")} en proceso</span>` : ""}${c("") ? `<span class="pill cola">${c("")} en cola</span>` : ""}${c("pendiente") ? `<span class="pill pendiente">${c("pendiente")} necesita material</span>` : ""}</div>
+      <ul>${l.map(r => { const s = seg(r.a), lv = nivel(r.a); return `<li><b>${r.a}</b><span class="tx" title="${esc(r.d)}">${esc(r.d)}</span>${lv ? `<span class="u u${lv}" title="${NIV[lv]}">${NIV[lv][0]}</span>` : ""}<span class="pill ${s.est || "cola"}">${s.est ? EST[s.est] : "En cola"}</span></li>`; }).join("")}</ul></div>`;
+  };
+  return (con.length ? `<div class="mecgrid">${con.map(card).join("")}</div>` : `<div class="empty">Ningún mecánico tiene trabajo asignado ahora.</div>`) +
+    (sin.length ? `<div class="mlibres">Sin trabajo asignado: ${sin.map(esc).join(" · ")}</div>` : "");
+}
+function cierreHtml(r){
+  const f = fotos.get(r.a);
+  return `<div class="cierre"><div class="ct">✓ Trabajo finalizado</div>
+    <div class="fila"><label class="btn"><input type="file" accept="image/*" capture="environment" class="foto" data-fa2="${r.a}">📷 ${f ? "Cambiar foto" : "Tomar foto"}</label>
+    ${f ? `<img src="${f.url}" alt="Foto del trabajo terminado">` : `<small>Foto del trabajo terminado (opcional, no se guarda)</small>`}</div>
+    <div class="pie"><small>Pedir el cierre del aviso en SAP</small><button type="button" class="btn wa" data-wa="${r.a}">Mandar a cerrar aviso por WhatsApp</button></div></div>`;
+}
+async function mandarCierre(a){
+  const r = DATA.find(x => x.a === a), s = seg(a), f = fotos.get(a);
+  const texto = `Favor cerrar aviso *${a}*\n${r ? r.d : ""}${r && r.e ? `\nEquipo: ${r.e}` : ""}${r && r.o ? `\nOrden: ${r.o}` : ""}\nMecánico: ${s.mec || "-"}\nFinalizado: ${s.ff ? fmtDT(s.ff) : fmtDT(new Date())}\nYa se trabajó.`;
+  if (f) {
+    try { if (navigator.canShare && navigator.canShare({ files: [f.file] })) { await navigator.share({ files: [f.file], text: texto }); return; } }
+    catch (e) { if (e && e.name === "AbortError") return; }
+    toast("Este teléfono no permite adjuntar la foto desde aquí; se manda solo el texto.");
+  }
+  const u = "https://wa.me/?text=" + encodeURIComponent(texto);
+  if (!window.open(u, "_blank")) location.href = u;
+}
+document.getElementById("list").addEventListener("change", e => {
+  const t = e.target; if (!t.classList.contains("foto")) return;
+  const a = t.dataset.fa2, file = t.files && t.files[0]; if (!file) return;
+  const prev = fotos.get(a); if (prev) URL.revokeObjectURL(prev.url);
+  fotos.set(a, { file, url: URL.createObjectURL(file) }); t.value = ""; render();
+});
+document.getElementById("list").addEventListener("click", e => { const w = e.target.closest("button[data-wa]"); if (w) mandarCierre(w.dataset.wa); });
+
+
+/* ---------- Solicitud de trabajo ---------- */
+let guardarSolicitudRemoto = null;
+(function(){
+  const q = id => document.getElementById(id);
+  const TRAB = ["Fabricación", "Rectificación", "Reparación", "Roscado", "Barrenado", "Torneado", "Soldadura + maquinado", "Otro"];
+  const ROS = ["Sin rosca", "NPT (tubería)", "NPS", "UNC (estándar)", "UNF (fina)", "Métrica", "Igual a muestra"];
+  const opts = (l, sel) => l.map(x => `<option${x === sel ? " selected" : ""}>${esc(x)}</option>`).join("");
+  let n = 0;
+  const addItem = () => {
+    n++; const d = document.createElement("div"); d.className = "item"; d.dataset.i = n;
+    d.innerHTML = `<div class="num"><span>Pieza</span><button type="button" class="del">Quitar</button></div>
+      <label>Cantidad<input class="iC" type="number" min="1" step="1" inputmode="numeric" required></label>
+      <label>Unidad<select class="iU"><option>pza</option><option>juego</option><option>metro</option></select></label>
+      <label>Trabajo<select class="iT">${opts(TRAB, "Fabricación")}</select></label>
+      <label>Pieza<input class="iP" list="dlPieza" maxlength="60" placeholder="Nipple, buje, eje…" required></label>
+      <label>Medida<input class="iM" maxlength="30" placeholder='2"'></label>
+      <label>Material<input class="iMa" list="dlMat" maxlength="40" placeholder="Acero al carbono"></label>
+      <label>Rosca<select class="iR">${opts(ROS, "Sin rosca")}</select></label>
+      <label class="obs">Medidas / detalle<input class="iO" maxlength="160" placeholder='Largo 6", rosca en ambos extremos, agujero de 3/4"'></label>`;
+    q("sItems").appendChild(d); renumerar();
+  };
+  const renumerar = () => [...q("sItems").children].forEach((d, i) => { d.querySelector(".num span").textContent = "Pieza " + (i + 1); d.querySelector(".del").hidden = q("sItems").children.length === 1; });
+  q("sItems").addEventListener("click", e => { if (e.target.classList.contains("del")) { e.target.closest(".item").remove(); renumerar(); } });
+  q("sAdd").addEventListener("click", addItem);
+  const llenarNombres = () => { const v = q("sN").value; q("sN").innerHTML = `<option value="">Elegir…</option>` + NAMES.map(x => `<option${x === v ? " selected" : ""}>${esc(x)}</option>`).join(""); };
+  const info = (t, c) => { const i = q("sInfo"); i.textContent = t; i.className = "info" + (c ? " " + c : ""); };
+  q("sA").addEventListener("input", () => {
+    const a = q("sA").value.replace(/\D/g, ""); q("sA").value = a;
+    if (a.length < 8) { info("Escribe el aviso y se llenan solos el equipo, la descripción y el solicitante."); return; }
+    const r = DATA.find(x => x.a === a);
+    if (r) { q("sE").value = r.e || ""; q("sD").value = r.d || ""; llenarNombres(); if (r.n) q("sN").value = r.n; info("Aviso encontrado: " + (r.n || "sin responsable") + " · " + (r.l === "CNC" ? "CNC" : "Tornos"), "ok"); }
+    else info("Ese aviso no está en la lista de abiertos. Escribe el equipo y la descripción a mano.", "warn");
+  });
+  const leerItems = () => [...q("sItems").children].map(d => ({ cant: d.querySelector(".iC").value, unidad: d.querySelector(".iU").value, trabajo: d.querySelector(".iT").value,
+    pieza: d.querySelector(".iP").value.trim(), medida: d.querySelector(".iM").value.trim(), material: d.querySelector(".iMa").value.trim(), rosca: d.querySelector(".iR").value, obs: d.querySelector(".iO").value.trim() }));
+  const fmtF = s => s ? s.split("-").reverse().join("/") : "";
+  const armarTexto = s => {
+    const L = [`*SOLICITUD DE TRABAJO · Taller CNC y Tornos*`, `Folio: ${s.folio}`, ``, `*Aviso:* ${s.aviso}`, s.equipo ? `*Equipo:* ${s.equipo}` : "", s.descripcion ? `*Descripción SAP:* ${s.descripcion}` : "",
+      `*Solicitante:* ${s.solicitante}`, `*Prioridad:* ${s.prioridad}${s.para ? ` · *Para:* ${fmtF(s.para)}` : ""}`, ``, `*Detalle:*`];
+    s.items.forEach((it, i) => {
+      L.push(`${i + 1}) ${it.cant} ${it.unidad} · ${it.trabajo} de ${it.pieza}${it.medida ? " " + it.medida : ""}`);
+      const x = [it.material && `Material: ${it.material}`, it.rosca && it.rosca !== "Sin rosca" && `Rosca: ${it.rosca}`, it.obs].filter(Boolean);
+      if (x.length) L.push(`   ${x.join(" · ")}`);
+    });
+    L.push(``, `*Referencia:* ${s.referencia}`, `*Material lo pone:* ${s.materialPone}`);
+    if (s.notas) L.push(`*Notas:* ${s.notas}`);
+    return L.filter((x, i, a) => !(x === "" && a[i - 1] === "")).filter(x => x !== null).join("\n");
+  };
+  let ultimo = "";
+  q("solForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const msg = (t, err) => { q("sMsg").textContent = t; q("sMsg").className = "capmsg" + (err ? " err" : ""); };
+    const a = q("sA").value.replace(/\D/g, "");
+    if (a.length !== 8) return msg("El aviso debe tener 8 números.", true);
+    if (!q("sN").value) return msg("Elige quién solicita.", true);
+    const items = leerItems();
+    if (items.some(it => !it.cant || !it.pieza)) return msg("Cada pieza necesita cantidad y nombre de la pieza.", true);
+    if (!q("sR").value) return msg("Indica la referencia: muestra, plano o medidas.", true);
+    if (!q("sM").value) return msg("Indica quién pone el material.", true);
+    const d = new Date(), p = x => String(x).padStart(2, "0");
+    const s = { folio: `SOL-${d.getFullYear() % 100}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}-${a.slice(-4)}`,
+      aviso: a, equipo: q("sE").value.trim(), descripcion: q("sD").value.trim(), solicitante: q("sN").value, prioridad: q("sP").value, para: q("sF").value,
+      items, referencia: q("sR").value, materialPone: q("sM").value, notas: q("sT").value.trim() };
+    q("sSave").disabled = true; msg("Guardando…");
+    let guardado = false, error = "";
+    try { if (guardarSolicitudRemoto) { const r = await guardarSolicitudRemoto(s); guardado = !!(r && r.ok); if (!guardado) error = (r && r.error) || "error"; } else error = "sin conexión con la hoja"; }
+    catch (err) { error = (err && err.message) || "sin conexión"; }
+    q("sSave").disabled = false;
+    ultimo = armarTexto(s);
+    q("sTxt").textContent = ultimo;
+    q("sOk").firstElementChild.textContent = guardado ? "✓ Solicitud guardada para Planificación" : "⚠ No se guardó en la hoja (" + error + "). Puedes enviarla por WhatsApp igual.";
+    q("sOk").firstElementChild.style.color = guardado ? "var(--ok)" : "var(--bad)";
+    q("solForm").hidden = true; q("sOk").hidden = false; msg("");
+    q("sol").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  q("sWa").addEventListener("click", () => { const u = "https://wa.me/?text=" + encodeURIComponent(ultimo); if (!window.open(u, "_blank")) location.href = u; });
+  q("sCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText(ultimo); toast("Mensaje copiado"); } catch (e) { toast("No se pudo copiar"); } });
+  const limpiar = () => { q("solForm").reset(); q("sItems").innerHTML = ""; addItem(); info("Escribe el aviso y se llenan solos el equipo, la descripción y el solicitante."); q("solForm").hidden = false; q("sOk").hidden = true; };
+  q("sNew").addEventListener("click", limpiar);
+  q("sReset").addEventListener("click", e => { e.preventDefault(); limpiar(); });
+  document.getElementById("vSol").addEventListener("click", () => { llenarNombres(); setVista("sol"); });
+  llenarNombres(); addItem();
+})();
+
+/* ---------- conexión ---------- */
+render();
+(async () => {
+  const banner = $("#banner");
+  let user = null;
+  try { [db, user, dl] = await Promise.all([window.claude?.use?.("db") ?? null, window.claude?.use?.("user") ?? null, window.claude?.use?.("downloads") ?? null]); } catch(e){ db = null; }
+  
+  if (!db && (API_URL || store.get("prio.api"))){
+    /* Modo compartido: Google Sheets */
+    const URL_API = API_URL || store.get("prio.api");
+    const EST_KEY = { "Necesita material":"pendiente", "Pendiente":"pendiente", "En proceso":"proceso", "Finalizado":"finalizado" };
+    const pending = new Map();           // aviso -> escrituras en curso
+    let firma = "";
+    const hashPin = t => { let h = 5381; for (const ch of String(t)) h = ((h * 33) ^ ch.charCodeAt(0)) >>> 0; return h.toString(36); };
+    let pin = store.get("prio.pin") || "";
+    canWrite = true; canAssign = !!pin && hashPin(pin) === PIN_HASH;   // queda guardado: entra directo
+    if (!canAssign) pin = "";
+    const post = async body => {
+      const r = await fetch(URL_API, { method: "POST", body: JSON.stringify(body) });
+      const txt = await r.text();
+      try { return JSON.parse(txt); } catch(x) { throw new Error("Google no respondió bien (ocupado o versión sin publicar)"); }
+    };
+    const espera = ms => new Promise(ok => setTimeout(ok, ms));
+    guardarSolicitudRemoto = async sol => {
+      let res = null, err = null;
+      for (let i = 0; i < 3 && !res; i++) { try { res = await post({ tipo: "solicitud", aviso: sol.aviso, solicitud: sol }); } catch(e) { err = e; await espera(1500 * (i + 1)); } }
+      if (!res) throw err || new Error("sin conexión");
+      return res;
+    };
+    guardarNuevoRemoto = async datos => {
+      let res = null, err = null;
+      for (let i = 0; i < 2 && !res; i++) { try { res = await post({ tipo: "nuevo_aviso", ...datos }); } catch(e) { err = e; await espera(1500); } }
+      if (!res) throw err || new Error("sin conexión");
+      if (res.ok && Array.isArray(res.avisos)) {
+        firma = res.avisos.map(x => x.a + x.n).join("|"); rebuildData(res.avisos);
+        if (res.rows) aplicarFilas(res.rows);
+        try { localStorage.setItem("prio.cache", JSON.stringify({ avisos: DATA, rows: res.rows || {} })); } catch(x){}
+        render(); syncMsg("Guardado " + hora());
+      }
+      return res;
+    };
+    const colas = new Map();   // una escritura a la vez por aviso, en orden
+    const setBanner = () => {
+      banner.hidden = false; banner.className = "banner";
+      banner.innerHTML = canAssign
+        ? "<b>Modo Líder / Supervisor.</b> Puedes asignar mecánico y marcar el estado. <button class=\"btn\" id=\"salirLider\" type=\"button\">Salir</button> <span id=\"sync\"></span>"
+        : "<b>Datos compartidos.</b> Todos ven lo mismo. <button class=\"btn\" id=\"lider\" type=\"button\">Soy Líder / Supervisor</button> <span id=\"sync\"></span>";
+      const l = document.getElementById("lider"), s = document.getElementById("salirLider");
+      if (l) l.addEventListener("click", pedirPin);
+      if (s) s.addEventListener("click", () => { canAssign = false; pin = ""; store.set("prio.pin", ""); setBanner(); render(); });
+    };
+    const pedirPin = () => {
+      banner.innerHTML = "<label for=\"pinIn\"><b>PIN del Líder:</b></label> <input id=\"pinIn\" type=\"password\" autocomplete=\"off\" autocapitalize=\"off\" spellcheck=\"false\" style=\"font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6px;width:120px\"> <button class=\"btn ok\" id=\"pinOk\" type=\"button\">Entrar</button> <button class=\"btn\" id=\"pinNo\" type=\"button\">Cancelar</button>";
+      const go = async () => {
+        const v = document.getElementById("pinIn").value.trim(); if (!v) return;
+        if (hashPin(v) === PIN_HASH) { pin = v; store.set("prio.pin", v); canAssign = true; setBanner(); render(); toast("Modo Líder activado"); }
+        else toast("PIN incorrecto");
+      };
+      document.getElementById("pinOk").addEventListener("click", go);
+      document.getElementById("pinIn").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+      document.getElementById("pinNo").addEventListener("click", setBanner);
+      document.getElementById("pinIn").focus();
+    };
+    const syncMsg = (t, bad) => { const s = document.getElementById("sync"); if (s) {
+      s.textContent = t; s.style.color = bad ? "var(--bad)" : "var(--muted)";
+      if (bad && !API_URL) { const b = document.createElement("button"); b.className = "btn"; b.type = "button"; b.textContent = "Cambiar URL"; b.style.marginLeft = "8px";
+        b.addEventListener("click", () => { store.set("prio.api", ""); location.reload(); }); s.appendChild(b); } } };
+    const aplicarFilas = rowsObj => {
+      const np = new Map(), ns = new Map();
+      Object.entries(rowsObj || {}).forEach(([a, x]) => {
+        if (pending.get(a)) { if (props.has(a)) np.set(a, props.get(a)); if (segs.has(a)) ns.set(a, segs.get(a)); return; }
+        if (x.u) np.set(a, { orden: +x.u, at: x.ut ? Date.parse(x.ut) || 0 : (props.get(a)?.orden === +x.u ? props.get(a).at || 0 : 0) });
+        const e = EST_KEY[x.est] || "";
+        const fr = x.fre === "Hecho" ? "hecho" : x.fre === "Pendiente" ? "pendiente" : "";
+        if (x.mec || e || fr) ns.set(a, { mec: x.mec || "", est: e, mot: x.mot || "", fre: fr, fa: x.fa || "", ff: x.ff || "", fm: x.fm || "" });
+      });
+      pending.forEach((n, a) => { if (n && !(a in (rowsObj||{}))) { if (props.has(a)) np.set(a, props.get(a)); if (segs.has(a)) ns.set(a, segs.get(a)); } });
+      props = np; segs = ns;
+    };
+    /* Copia local: la página abre al instante con lo último que vio */
+    let ultimo = null;
+    try { ultimo = JSON.parse(localStorage.getItem("prio.cache") || "null"); } catch(e){}
+    if (ultimo && Array.isArray(ultimo.avisos) && ultimo.avisos.length) {
+      firma = ultimo.avisos.map(x => x.a + x.n).join("|"); rebuildData(ultimo.avisos); aplicarFilas(ultimo.rows);
+    }
+    let ultimaLista = 0, fallos = 0, reintento = null;
+    const hora = () => new Date().toLocaleTimeString("es-GT", { hour: "2-digit", minute: "2-digit" });
+    const cargar = async (forzarLista) => {
+      try {
+        const conLista = forzarLista || !firma || Date.now() - ultimaLista > 5 * 60000;
+        const txt = await (await fetch(URL_API + (URL_API.includes("?") ? "&" : "?") + "t=" + Date.now() + (conLista ? "" : "&av=0"))).text();
+        let r; try { r = JSON.parse(txt); } catch(x) { throw new Error("Google respondió una página en lugar de datos. Revisa que la implementación sea 'Cualquier persona' y esté actualizada"); }
+        if (!r.ok) throw new Error(r.error || "respuesta inválida");
+        if (Array.isArray(r.avisos)) {
+          ultimaLista = Date.now();
+          const f = r.avisos.map(x => x.a + x.n).join("|");
+          if (r.avisos.length && f !== firma) { firma = f; rebuildData(r.avisos); }
+        }
+        aplicarFilas(r.rows); schedule();
+        try { localStorage.setItem("prio.cache", JSON.stringify({ avisos: DATA, rows: r.rows })); } catch(e){}
+        fallos = 0; syncMsg("Actualizado " + hora());
+      } catch(e){
+        fallos++;
+        if (fallos >= 3) syncMsg("No se pudo leer la hoja de Google: " + (e && e.message ? e.message : "sin conexión"), true);
+        else syncMsg("Reintentando…");
+        clearTimeout(reintento); reintento = setTimeout(() => cargar(forzarLista), 3000);
+      }
+    };
+    commit = async (path, body, msg) => {
+      const [col, a] = path.split("/"); const r = DATA.find(x => x.a === a);
+      const base = { aviso: a, responsable: r ? r.n : "", descripcion: r ? r.d : "" };
+      const req = col === "propuestas"
+        ? { ...base, tipo: "urgencia", urgencia: body ? body.orden : "" }
+        : col === "fresadora" ? { ...base, tipo: "fresadora", fresadora: body?.fre ? FRE[body.fre] : "" }
+        : { ...base, tipo: "seguimiento", pin, mecanico: body?.mec || "", estado: body?.est ? EST[body.est] : "", motivo: body?.mot || "", fresadora: body?.fre ? FRE[body.fre] : "" };
+      pending.set(a, (pending.get(a) || 0) + 1);
+      const tarea = async () => {
+        let ultimoError = "";
+        for (let intento = 1; intento <= 3; intento++) {
+          try {
+            const res = await post(req);
+            if (res.ok) {
+              toast(msg);
+              if (res.rows) { aplicarFilas(res.rows); schedule(); try { localStorage.setItem("prio.cache", JSON.stringify({ avisos: DATA, rows: res.rows })); } catch(x){} }
+              syncMsg("Guardado " + hora());
+              return;
+            }
+            if (res.error === "pin") { toast("El PIN no coincide con el de la hoja. Vuelve a entrar como Líder."); canAssign = false; pin = ""; store.set("prio.pin", ""); setBanner(); render(); return; }
+            ultimoError = res.error || "error desconocido";
+          } catch(e) { ultimoError = (e && e.message) || "sin conexión"; }
+          if (intento < 3) { syncMsg("Guardando… reintento " + intento); await espera(1500 * intento); }
+        }
+        toast("No se guardó: " + ultimoError);
+        syncMsg("No se guardó el aviso " + a + ": " + ultimoError, true);
+      };
+      const previa = colas.get(a) || Promise.resolve();
+      const actual = previa.then(tarea).finally(() => { pending.set(a, (pending.get(a) || 1) - 1); if (!pending.get(a)) pending.delete(a); });
+      colas.set(a, actual);
+      await actual;
+    };
+    setBanner(); render(); syncMsg(ultimo ? "Actualizando…" : "Cargando avisos…");
+    await cargar(true);
+    setInterval(() => { if (!pending.size && !document.hidden) cargar(); }, 30000);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) cargar(); });
+    return;
+  }
+  if (!db){
+    /* Archivo descargado: guarda en este navegador */
+    const load = k => { try { return new Map(Object.entries(JSON.parse(localStorage.getItem(k) || "{}"))); } catch(e){ return new Map(); } };
+    props = load("prio.local.props"); segs = load("prio.local.segs");
+    const persist = () => { try {
+      localStorage.setItem("prio.local.props", JSON.stringify(Object.fromEntries(props)));
+      localStorage.setItem("prio.local.segs", JSON.stringify(Object.fromEntries(segs)));
+    } catch(e){} };
+    commit = (path, body, msg) => { persist(); toast(msg); };
+    canWrite = true; canAssign = true;
+    banner.className = "banner";
+    banner.innerHTML = "<b>Archivo local.</b> Los cambios se guardan solo en este teléfono o computadora. Para compartir con todos, pega la URL de la hoja de Google: <input id=\"apiIn\" type=\"url\" placeholder=\"https://script.google.com/macros/s/…/exec\" style=\"font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6px;width:min(100%,420px)\"> <button class=\"btn ok\" id=\"apiOk\" type=\"button\">Conectar</button>";
+    document.getElementById("apiOk").addEventListener("click", () => { const v = document.getElementById("apiIn").value.trim(); if (/^https:\/\/script\.google\.com\/.*\/exec(\?.*)?$/.test(v)) { store.set("prio.api", v); location.reload(); } else toast("Pega la URL que termina en /exec"); });
+    render();
+    return;
+  }
+  uid = user ? await user.id() : null;
+  const cw = user ? await user.can("data.write") : null;
+  canWrite = cw !== false;
+  canAssign = user ? await user.canEdit() : false;
+  if (canAssign || canWrite) banner.hidden = true;
+  else banner.innerHTML = "<b>Solo lectura.</b> Pide acceso de Colaborador para marcar tus urgencias.";
+  const sub = (col, set) => db.collection(col).limit(1000).onSnapshot(s => {
+    const m = new Map(); s.docs.forEach(d => { if (d.exists) m.set(d.id, d.data()); }); set(m); schedule();
+  }, () => { banner.hidden = false; banner.className = "banner err"; banner.textContent = "Se perdió la conexión con el registro compartido. Recarga la página."; });
+  sub("propuestas", m => props = m);
+  sub("seguimiento", m => segs = m);
+  render();
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator && location.protocol === "https:") { navigator.serviceWorker.register("sw.js").catch(function(){}); }
+</script>
+</body>
+</html>
